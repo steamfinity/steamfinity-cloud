@@ -16,6 +16,7 @@ builder.Services.AddSwaggerGen();
 var application = builder.Build();
 
 application.UseHttpsRedirection();
+application.MapControllers();
 
 if (application.Environment.IsDevelopment())
 {
