@@ -22,4 +22,7 @@ if (application.Environment.IsDevelopment())
     _ = application.UseSwaggerUI();
 }
 
+using var roleInitializerScope = application.Services.CreateAsyncScope();
+await roleInitializerScope.ServiceProvider.GetRequiredService<IRoleInitializer>().InitializeRolesAsync();
+
 application.Run();
