@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Steamfinity.Cloud</RootNamespace>
+    <UserSecretsId>9b4b8892-6cf8-4c2d-bdd1-fbbcbe70baf3</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
