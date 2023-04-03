@@ -2,7 +2,7 @@
 Thank you for considering contributing to Steamfinity Cloud! To ensure that the codebase remains high quality and secure, we ask that all contributors follow the guidelines below. 
 
 > **Warning**<br>
-> Before you start, please make sure that the feature, issue, or change is related to the Steamfinity Cloud and not the [Steamfinity](https://github.com/steamfinity/steamfinity-app) app, 
+> Before you start, please make sure that the feature, issue, or change is related to the Steamfinity Cloud and not the [Steamfinity](https://github.com/steamfinity/steamfinity) app, 
 which is located in a separate repository.
 
 # Microsoft C# Code Style and Naming Conventions
