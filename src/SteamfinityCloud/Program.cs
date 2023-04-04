@@ -23,11 +23,11 @@ builder.Services.AddAuthentication(options =>
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
-    options.TokenValidationParameters.ValidIssuer = builder.Configuration["Authentication:Schemes:Issuer"];
-    options.TokenValidationParameters.ValidAudience = builder.Configuration["Authentication:Schemes:Audience"];
+    options.TokenValidationParameters.ValidIssuer = builder.Configuration["Authentication:Schemes:Bearer:Issuer"];
+    options.TokenValidationParameters.ValidAudience = builder.Configuration["Authentication:Schemes:Bearer:Audience"];
 
-    var issuerSigningKey = builder.Configuration["Authentication:Schemes:IssuerSigningKey"]
-    ?? throw new ConfigurationMissingException("Authentication:Schemes:IssuerSigningKey");
+    var issuerSigningKey = builder.Configuration["Authentication:Schemes:Bearer:IssuerSigningKey"]
+    ?? throw new ConfigurationMissingException("Authentication:Schemes:Bearer:IssuerSigningKey");
 
     options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey));
 });
