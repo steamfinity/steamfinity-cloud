@@ -44,6 +44,8 @@ builder.Services.AddSwaggerGen();
 var application = builder.Build();
 
 application.UseHttpsRedirection();
+application.UseAuthentication();
+application.UseAuthorization();
 application.MapControllers();
 
 if (application.Environment.IsDevelopment())
