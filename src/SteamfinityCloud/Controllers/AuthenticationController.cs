@@ -7,6 +7,7 @@ using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 
 namespace Steamfinity.Cloud.Controllers;
 
@@ -264,12 +265,14 @@ public sealed class AuthenticationController : ControllerBase
             throw new ConfigurationMissingException("Authentication:Schemes:Bearer:IssuerSigningKey");
         }
 
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey));
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.Add(lifetime),
             Issuer = _configuration["Authentication:Schemes:Bearer:Issuer"],
-            Audience = _configuration["Authentication:Schemes:Bearer:Audience"]
+            Audience = _configuration["Authentication:Schemes:Bearer:Audience"],
+            SigningCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256)
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
