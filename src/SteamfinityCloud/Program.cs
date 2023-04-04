@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Steamfinity.Cloud;
+using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Services;
@@ -28,6 +29,12 @@ builder.Services.AddAuthentication(options =>
     ?? throw new ConfigurationMissingException("Authentication:Schemes:IssuerSigningKey");
 
     options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey));
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(PolicyNames.Users, policy => policy.RequireRole(RoleNames.User, RoleNames.Administrator));
+    options.AddPolicy(PolicyNames.Administrators, policy => policy.RequireRole(RoleNames.Administrator));
 });
 
 builder.Services.AddControllers();
