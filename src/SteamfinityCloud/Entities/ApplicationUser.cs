@@ -26,4 +26,24 @@ public sealed class ApplicationUser : IdentityUser<Guid>
     /// This value is updated with every successful authentication token renewal.
     /// </summary>
     public DateTimeOffset? LastSignInTime { get; set; }
+
+    /// <summary>
+    /// Gets all accounts added by the user.
+    /// </summary>
+    public ICollection<SteamAccount> OwnedAccounts { get; } = null!;
+
+    /// <summary>
+    /// Gets all groups added by the user.
+    /// </summary>
+    public ICollection<AccountGroup> OwnedGroups { get; } = null!;
+
+    /// <summary>
+    /// Gets all incoming account shares for the user.
+    /// </summary>
+    public ICollection<AccountShare> AccountShares { get; } = null!;
+
+    /// <summary>
+    /// Get all incoming group shares for the user.
+    /// </summary>
+    public ICollection<GroupShare> GroupShares { get; } = null!;
 }

@@ -39,4 +39,20 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
     /// Gets or sets the database set of all group shares.
     /// </summary>
     public required DbSet<GroupShare> GroupShares { get; init; }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        builder.Entity<ApplicationUser>().HasMany(u => u.OwnedAccounts).WithOne(a => a.Owner).HasForeignKey(a => a.OwnerId);
+        builder.Entity<ApplicationUser>().HasMany(u => u.OwnedGroups).WithOne(g => g.Owner).HasForeignKey(g => g.OwnerId);
+        builder.Entity<ApplicationUser>().HasMany(u => u.AccountShares).WithOne(s => s.User).HasForeignKey(s => s.UserId);
+        builder.Entity<ApplicationUser>().HasMany(u => u.GroupShares).WithOne(s => s.User).HasForeignKey(s => s.UserId);
+
+        builder.Entity<SteamAccount>().HasMany(a => a.Memberships).WithOne(m => m.Account).HasForeignKey(m => m.AccountId);
+        builder.Entity<SteamAccount>().HasMany(a => a.Shares).WithOne(s => s.Account).HasForeignKey(s => s.AccountId);
+
+        builder.Entity<AccountGroup>().HasMany(g => g.Memberships).WithOne(m => m.Group).HasForeignKey(m => m.GroupId);
+        builder.Entity<AccountGroup>().HasMany(g => g.Shares).WithOne(s => s.Group).HasForeignKey(s => s.GroupId);
+    }
 }

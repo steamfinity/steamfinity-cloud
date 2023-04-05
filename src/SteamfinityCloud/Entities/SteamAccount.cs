@@ -183,4 +183,14 @@ public sealed class SteamAccount
     /// Gets or sets the user's notes for this account.
     /// </summary>
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// Gets all group memberships for the account.
+    /// </summary>
+    public ICollection<GroupMembership> Memberships { get; } = null!;
+
+    /// <summary>
+    /// Gets all shares of the account.
+    /// </summary>
+    public ICollection<AccountShare> Shares { get; } = null!;
 }

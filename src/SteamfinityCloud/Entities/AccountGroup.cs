@@ -45,4 +45,14 @@ public sealed class AccountGroup
     /// Gets or sets the date and time when the group was created.
     /// </summary>
     public DateTimeOffset CreationTime { get; init; } = DateTimeOffset.UtcNow;
+
+    /// <summary>
+    /// Gets the memberships of all accounts that belong to the group.
+    /// </summary>
+    public ICollection<GroupMembership> Memberships { get; } = null!;
+
+    /// <summary>
+    /// Gets all shares of the group.
+    /// </summary>
+    public ICollection<GroupShare> Shares { get; } = null!;
 }
