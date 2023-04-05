@@ -29,4 +29,9 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
     /// Gets or sets the database set of all Steam account group memberships.
     /// </summary>
     public required DbSet<GroupMembership> Memberships { get; init; }
+
+    /// <summary>
+    /// Gets or sets the database set of all account shares.
+    /// </summary>
+    public required DbSet<AccountShare> AccountShares { get; init; }
 }
