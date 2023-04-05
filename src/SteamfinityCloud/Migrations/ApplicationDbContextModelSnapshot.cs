@@ -125,6 +125,61 @@ namespace Steamfinity.Cloud.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.AccountGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTimeOffset>("CreationTime")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("LaunchParameters")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Groups");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.AccountShare", b =>
+                {
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<bool>("IsAllowedToEdit")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<bool>("IsAllowedToSignIn")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<bool>("IsAllowedToViewPassword")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<DateTimeOffset>("TimeShared")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.HasKey("AccountId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AccountShares");
+                });
+
             modelBuilder.Entity("Steamfinity.Cloud.Entities.ApplicationRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -228,6 +283,138 @@ namespace Steamfinity.Cloud.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.GroupMembership", b =>
+                {
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("GroupId", "AccountId");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("Memberships");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.GroupShare", b =>
+                {
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<bool>("IsAllowedToEdit")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<bool>("IsAllowedToSignIn")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<bool>("IsAllowedToViewPasswords")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<DateTimeOffset>("TimeShared")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.HasKey("GroupId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GroupShares");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.SteamAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("AccountName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<decimal?>("CurrentGameId")
+                        .HasColumnType("NUMBER(20)");
+
+                    b.Property<string>("CurrentGameName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<bool?>("IsCommentingAllowed")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<bool?>("IsCommunityBanned")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<bool?>("IsProfileSetUp")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<bool?>("IsProfileVisible")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.Property<string>("LaunchParameters")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<int?>("NumberOfDaysSinceLastBan")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.Property<int?>("NumberOfGameBans")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.Property<int?>("NumberOfVACBans")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("ProfileName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("ProfileUrl")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("RealName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.Property<decimal>("SteamId")
+                        .HasColumnType("NUMBER(20)");
+
+                    b.Property<DateTimeOffset>("TimeAdded")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<DateTimeOffset?>("TimeCreated")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<DateTimeOffset?>("TimeEdited")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<DateTimeOffset?>("TimeSignedOut")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<DateTimeOffset?>("TimeUpdated")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("SteamId");
+
+                    b.ToTable("Accounts");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Steamfinity.Cloud.Entities.ApplicationRole", null)
@@ -277,6 +464,110 @@ namespace Steamfinity.Cloud.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.AccountGroup", b =>
+                {
+                    b.HasOne("Steamfinity.Cloud.Entities.ApplicationUser", "Owner")
+                        .WithMany("OwnedGroups")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.AccountShare", b =>
+                {
+                    b.HasOne("Steamfinity.Cloud.Entities.SteamAccount", "Account")
+                        .WithMany("Shares")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Steamfinity.Cloud.Entities.ApplicationUser", "User")
+                        .WithMany("AccountShares")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.GroupMembership", b =>
+                {
+                    b.HasOne("Steamfinity.Cloud.Entities.SteamAccount", "Account")
+                        .WithMany("Memberships")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Steamfinity.Cloud.Entities.AccountGroup", "Group")
+                        .WithMany("Memberships")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.GroupShare", b =>
+                {
+                    b.HasOne("Steamfinity.Cloud.Entities.AccountGroup", "Group")
+                        .WithMany("Shares")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Steamfinity.Cloud.Entities.ApplicationUser", "User")
+                        .WithMany("GroupShares")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.SteamAccount", b =>
+                {
+                    b.HasOne("Steamfinity.Cloud.Entities.ApplicationUser", "Owner")
+                        .WithMany("OwnedAccounts")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.AccountGroup", b =>
+                {
+                    b.Navigation("Memberships");
+
+                    b.Navigation("Shares");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.ApplicationUser", b =>
+                {
+                    b.Navigation("AccountShares");
+
+                    b.Navigation("GroupShares");
+
+                    b.Navigation("OwnedAccounts");
+
+                    b.Navigation("OwnedGroups");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.SteamAccount", b =>
+                {
+                    b.Navigation("Memberships");
+
+                    b.Navigation("Shares");
                 });
 #pragma warning restore 612, 618
         }

@@ -75,6 +75,48 @@ namespace Steamfinity.Cloud.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Accounts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    OwnerId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    SteamId = table.Column<decimal>(type: "NUMBER(20)", nullable: false),
+                    AccountName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    Password = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    ProfileName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    RealName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    AvatarUrl = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    ProfileUrl = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    IsProfileSetUp = table.Column<bool>(type: "NUMBER(1)", nullable: true),
+                    IsProfileVisible = table.Column<bool>(type: "NUMBER(1)", nullable: true),
+                    IsCommentingAllowed = table.Column<bool>(type: "NUMBER(1)", nullable: true),
+                    Status = table.Column<int>(type: "NUMBER(10)", nullable: true),
+                    CurrentGameId = table.Column<decimal>(type: "NUMBER(20)", nullable: true),
+                    CurrentGameName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    IsCommunityBanned = table.Column<bool>(type: "NUMBER(1)", nullable: true),
+                    NumberOfVACBans = table.Column<int>(type: "NUMBER(10)", nullable: true),
+                    NumberOfGameBans = table.Column<int>(type: "NUMBER(10)", nullable: true),
+                    NumberOfDaysSinceLastBan = table.Column<int>(type: "NUMBER(10)", nullable: true),
+                    LaunchParameters = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    TimeCreated = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: true),
+                    TimeSignedOut = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: true),
+                    TimeAdded = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: false),
+                    TimeEdited = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: true),
+                    TimeUpdated = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: true),
+                    Notes = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Accounts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Accounts_AspNetUsers_OwnerId",
+                        column: x => x.OwnerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetUserClaims",
                 columns: table => new
                 {
@@ -159,6 +201,123 @@ namespace Steamfinity.Cloud.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Groups",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    OwnerId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    Name = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    Description = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    LaunchParameters = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    CreationTime = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Groups", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Groups_AspNetUsers_OwnerId",
+                        column: x => x.OwnerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AccountShares",
+                columns: table => new
+                {
+                    AccountId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    UserId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    IsAllowedToSignIn = table.Column<bool>(type: "NUMBER(1)", nullable: false),
+                    IsAllowedToViewPassword = table.Column<bool>(type: "NUMBER(1)", nullable: false),
+                    IsAllowedToEdit = table.Column<bool>(type: "NUMBER(1)", nullable: false),
+                    TimeShared = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccountShares", x => new { x.AccountId, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_AccountShares_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AccountShares_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GroupShares",
+                columns: table => new
+                {
+                    GroupId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    UserId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    IsAllowedToSignIn = table.Column<bool>(type: "NUMBER(1)", nullable: false),
+                    IsAllowedToViewPasswords = table.Column<bool>(type: "NUMBER(1)", nullable: false),
+                    IsAllowedToEdit = table.Column<bool>(type: "NUMBER(1)", nullable: false),
+                    TimeShared = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupShares", x => new { x.GroupId, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_GroupShares_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupShares_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Memberships",
+                columns: table => new
+                {
+                    GroupId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    AccountId = table.Column<Guid>(type: "RAW(16)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Memberships", x => new { x.GroupId, x.AccountId });
+                    table.ForeignKey(
+                        name: "FK_Memberships_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Memberships_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_OwnerId",
+                table: "Accounts",
+                column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_SteamId",
+                table: "Accounts",
+                column: "SteamId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccountShares_UserId",
+                table: "AccountShares",
+                column: "UserId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -197,11 +356,29 @@ namespace Steamfinity.Cloud.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "\"NormalizedUserName\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_OwnerId",
+                table: "Groups",
+                column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupShares_UserId",
+                table: "GroupShares",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Memberships_AccountId",
+                table: "Memberships",
+                column: "AccountId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AccountShares");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -218,7 +395,19 @@ namespace Steamfinity.Cloud.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "GroupShares");
+
+            migrationBuilder.DropTable(
+                name: "Memberships");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Accounts");
+
+            migrationBuilder.DropTable(
+                name: "Groups");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
