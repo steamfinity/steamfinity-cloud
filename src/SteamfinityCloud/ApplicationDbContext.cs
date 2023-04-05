@@ -14,4 +14,9 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
     /// </summary>
     /// <param name="options">The options to be used by the database context.</param>
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+    /// <summary>
+    /// Gets or sets the database set of Steam accounts.
+    /// </summary>
+    public required DbSet<SteamAccount> SteamAccounts { get; init; }
 }
