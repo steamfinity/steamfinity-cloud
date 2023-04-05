@@ -4,8 +4,11 @@ using Steamfinity.Cloud.Enums;
 namespace Steamfinity.Cloud.Entities;
 
 /// <summary>
-/// Represents a Steam account. This is an internal database entity that should not be exposed to the client.
+/// Represents a Steam account.
 /// </summary>
+/// <remarks>
+/// This is an internal database entity and should not be exposed to the client.
+/// </remarks>
 [Index(nameof(SteamId))]
 public sealed class SteamAccount
 {
@@ -41,7 +44,7 @@ public sealed class SteamAccount
     public string? AccountName { get; set; }
 
     /// <summary>
-    /// Gets or sets the password of the account.
+    /// Gets or sets the password for the account.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -57,8 +60,11 @@ public sealed class SteamAccount
     public string? ProfileName { get; set; }
 
     /// <summary>
-    /// Gets or sets the real name of the account.
+    /// Gets or sets the real name specified in the about section.
     /// </summary>
+    /// <remarks>
+    /// The value of this property may be unavailable if the account is private or friends only.
+    /// </remarks>
     public string? RealName { get; set; }
 
     /// <summary>
@@ -72,42 +78,51 @@ public sealed class SteamAccount
     public string? ProfileUrl { get; set; }
 
     /// <summary>
-    /// Gets or sets a flag indicating if the profile of the account has been set up.
+    /// Gets or sets a flag indicating whether the profile of the account has been set up.
     /// </summary>
-    /// <value>True if the profile has been set up, otherwise false.</value>
+    /// <value><see langword="true"/> if the profile has been set up, otherwise <see langword="false"/>.</value>
     public bool? IsProfileSetUp { get; set; }
 
     /// <summary>
-    /// Gets or sets a flag indicating if the profile of the account is visible.
+    /// Gets or sets a flag indicating whether the profile of the account is visible to Steamfinity.
     /// </summary>
-    /// <value>True if the profile is visible, otherwise false.</value>
+    /// <value><see langword="true"/> if the profile is visible, otherwise <see langword="false"/>.</value>
     public bool? IsProfileVisible { get; set; }
 
     /// <summary>
     /// Gets or sets a flag indicating whether the account is accepting new comments.
     /// </summary>
-    /// <value>True if the account has comments enabled, otherwise false.</value>
+    /// <value><see langword="true"/> if the account has comments enabled, otherwise <see langword="false"/>.</value>
     public bool? IsCommentingAllowed { get; set; }
 
     /// <summary>
-    /// Gets or sets the status of the account.
+    /// Gets or sets the activity status of the account.
     /// </summary>
+    /// <remarks>
+    /// The value of this property may be inaccurate or unavailable if the account is private or friends only.
+    /// </remarks>
     public AccountStatus? Status { get; set; }
 
     /// <summary>
     /// Gets or sets the identifier of the game that the account is currently playing.
     /// </summary>
+    /// <remarks>
+    /// The value of this property may be unavailable if the account is private or friends only.
+    /// </remarks>
     public ulong? CurrentGameId { get; set; }
 
     /// <summary>
     /// Gets or sets the display name of the game that the account is currently playing.
     /// </summary>
+    /// <remarks>
+    /// The value of this property may be unavailable if the account is private or friends only.
+    /// </remarks>
     public string? CurrentGameName { get; set; }
 
     /// <summary>
     /// Gets or sets a flag indicating whether the account is banned from the Steam community.
     /// </summary>
-    /// <value>True if the account is community banned, otherwise false.</value>
+    /// <value><see langword="true"/> if the account is community banned, otherwise <see langword="false"/>.</value>
     public bool? IsCommunityBanned { get; set; }
 
     /// <summary>
@@ -121,39 +136,48 @@ public sealed class SteamAccount
     public int? NumberOfGameBans { get; set; }
 
     /// <summary>
-    /// Gets or sets the number of days that have passed since the last ban was issued.
+    /// Gets or sets the number of days that have passed since the last ban was imposed.
     /// </summary>
     public int? NumberOfDaysSinceLastBan { get; set; }
 
     /// <summary>
-    /// Gets or sets the Steam launch parameters for the account.
+    /// Gets or sets the Steam launch parameters specified for the account.
     /// </summary>
+    /// <remarks>
+    /// Account launch parameters have priority over global and group launch parameters.
+    /// </remarks>
     public string? LaunchParameters { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time when the account was created.
     /// </summary>
-    public DateTimeOffset? SignUpTime { get; set; }
+    /// <remarks>
+    /// The value of this property may be unavailable if the account is private or friends only.
+    /// </remarks>
+    public DateTimeOffset? TimeCreated { get; set; }
 
     /// <summary>
-    /// Gets or sets the date and time when the account was last accessed.
+    /// Gets or sets the date and time when the account was last online.
     /// </summary>
-    public DateTimeOffset? LastSignOutTime { get; set; }
+    /// <remarks>
+    /// The value of this property may be unavailable if the account is private or friends only.
+    /// </remarks>
+    public DateTimeOffset? TimeSignedOut { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time when the account was added to Steamfinity.
     /// </summary>
-    public DateTimeOffset AdditionTime { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset TimeAdded { get; init; } = DateTimeOffset.UtcNow;
 
     /// <summary>
-    /// Gets or sets the date and time when the account was last manually edited.
+    /// Gets or sets the date and time when the account information was last manually edited.
     /// </summary>
-    public DateTimeOffset? LastEditTime { get; set; }
+    public DateTimeOffset? TimeEdited { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time when the account was last updated with the data obtained from the Steam API.
     /// </summary>
-    public DateTimeOffset? LastUpdateTime { get; set; }
+    public DateTimeOffset? TimeUpdated { get; set; }
 
     /// <summary>
     /// Gets or sets the user's notes for this account.

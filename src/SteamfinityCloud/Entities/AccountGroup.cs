@@ -1,8 +1,11 @@
 ﻿namespace Steamfinity.Cloud.Entities;
 
 /// <summary>
-/// Represents a group of Steam accounts. This is an internal database entity that should not be exposed to the client.
+/// Represents a group of Steam accounts.
 /// </summary>
+/// <remarks>
+/// This is an internal database entity and should not be exposed to the client.
+/// </remarks>
 public sealed class AccountGroup
 {
     /// <summary>

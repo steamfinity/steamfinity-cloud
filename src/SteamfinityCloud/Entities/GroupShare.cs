@@ -35,7 +35,10 @@ public sealed class GroupShare
     /// Gets or sets a flag indicating whether the user can sign in to all accounts in the group.
     /// </summary>
     /// <remarks>
-    /// The user may still be able to sign in if another group or an individual share allows this.
+    ///     <list type="bullet">
+    ///        <item>This property has no effect when <c>IsAllowedToViewPasswords</c> or <c>IsAllowedToEdit</c> are set to <see langword="true"/>.</item>
+    ///        <item>The user may still be able to sign in if another group or an individual share allows this.</item>
+    ///     </list>
     /// </remarks>
     /// <value><see langword="true"/> if the user is allowed to sign in, otherwise <see langword="false"/>.</value>
     public bool IsAllowedToSignIn { get; set; }
@@ -44,7 +47,10 @@ public sealed class GroupShare
     /// Gets or sets a flag indicating whether the user can view the passwords of all accounts in the group.
     /// </summary>
     /// <remarks>
-    /// The user may still be able to view the password if another group or an individual share allows this.
+    ///     <list type="bullet">
+    ///        <item>This property has no effect when <c>IsAllowedToEdit</c> is set to <see langword="true"/>.</item>
+    ///        <item>The user may still be able to view the password if another group or an individual share allows this.</item>
+    ///     </list>
     /// </remarks>
     /// <value><see langword="true"/> if the user is allowed to view the passwords, otherwise <see langword="false"/>.</value>
     public bool IsAllowedToViewPasswords { get; set; }

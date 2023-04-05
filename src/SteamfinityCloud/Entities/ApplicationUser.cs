@@ -5,6 +5,9 @@ namespace Steamfinity.Cloud.Entities;
 /// <summary>
 /// Represents a user of the Steamfinity Cloud.
 /// </summary>
+/// <remarks>
+/// This is an internal database entity and should not be exposed to the client.
+/// </remarks>
 public sealed class ApplicationUser : IdentityUser<Guid>
 {
     /// <summary>

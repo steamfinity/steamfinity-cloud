@@ -3,10 +3,13 @@
 namespace Steamfinity.Cloud.Entities;
 
 /// <summary>
-/// Represents a membership of a Steam account to a group. This is an internal database entity that should not be exposed to the client.
+/// Represents an account's membership in a group.
 /// </summary>
 /// <remarks>
-/// One Steam account can be a member of multiple groups.
+///     <list type="bullet">
+///         <item>One account can be a member of multiple groups.</item>
+///         <item>This is an internal database entity and should not be exposed to the client.</item>
+///     </list>
 /// </remarks>
 [PrimaryKey(nameof(GroupId), nameof(AccountId))]
 public sealed class GroupMembership
