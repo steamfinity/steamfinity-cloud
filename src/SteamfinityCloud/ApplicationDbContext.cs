@@ -34,4 +34,9 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
     /// Gets or sets the database set of all account shares.
     /// </summary>
     public required DbSet<AccountShare> AccountShares { get; init; }
+
+    /// <summary>
+    /// Gets or sets the database set of all group shares.
+    /// </summary>
+    public required DbSet<GroupShare> GroupShares { get; init; }
 }
