@@ -28,6 +28,11 @@ public sealed class SteamAccount
     public ApplicationUser Owner { get; } = null!;
 
     /// <summary>
+    /// Gets or sets the alias for the account.
+    /// </summary>
+    public string? Alias { get; set; }
+
+    /// <summary>
     /// Gets or sets the Steam ID of the account.
     /// </summary>
     public required ulong SteamId { get; init; }
