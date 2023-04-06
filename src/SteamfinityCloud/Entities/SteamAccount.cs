@@ -33,6 +33,14 @@ public sealed class SteamAccount
     public string? Alias { get; set; }
 
     /// <summary>
+    /// Gets or sets the color associated with the account.
+    /// </summary>
+    /// <remarks>
+    /// This property is used purely for organizational purposes.
+    /// </remarks>
+    public SimpleColor Color { get; set; }
+
+    /// <summary>
     /// Gets or sets the Steam ID of the account.
     /// </summary>
     public required ulong SteamId { get; init; }

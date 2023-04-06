@@ -1,4 +1,6 @@
-﻿namespace Steamfinity.Cloud.Entities;
+﻿using Steamfinity.Cloud.Enums;
+
+namespace Steamfinity.Cloud.Entities;
 
 /// <summary>
 /// Represents a group of Steam accounts.
@@ -32,6 +34,14 @@ public sealed class AccountGroup
     /// Gets or sets the description of the group.
     /// </summary>
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Gets or sets the color associated with the group.
+    /// </summary>
+    /// <remarks>
+    /// This property is used purely for organizational purposes.
+    /// </remarks>
+    public SimpleColor Color { get; set; }
 
     /// <summary>
     /// Gets or sets the Steam launch parameters specified for all accounts in the group.
