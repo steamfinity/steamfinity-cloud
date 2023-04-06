@@ -21,6 +21,11 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
     public required DbSet<SteamAccount> Accounts { get; init; }
 
     /// <summary>
+    /// Gets or sets the database set of all account tags.
+    /// </summary>
+    public required DbSet<AccountTag> Tags { get; init; }
+
+    /// <summary>
     /// Gets or sets the database set of all Steam account groups.
     /// </summary>
     public required DbSet<AccountGroup> Groups { get; init; }
@@ -49,6 +54,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
         builder.Entity<ApplicationUser>().HasMany(u => u.AccountShares).WithOne(s => s.User).HasForeignKey(s => s.UserId);
         builder.Entity<ApplicationUser>().HasMany(u => u.GroupShares).WithOne(s => s.User).HasForeignKey(s => s.UserId);
 
+        builder.Entity<SteamAccount>().HasMany(a => a.Tags).WithOne(t => t.Account).HasForeignKey(t => t.AccountId);
         builder.Entity<SteamAccount>().HasMany(a => a.Memberships).WithOne(m => m.Account).HasForeignKey(m => m.AccountId);
         builder.Entity<SteamAccount>().HasMany(a => a.Shares).WithOne(s => s.Account).HasForeignKey(s => s.AccountId);
 

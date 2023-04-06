@@ -198,6 +198,11 @@ public sealed class SteamAccount
     public string? Notes { get; set; }
 
     /// <summary>
+    /// Gets the collection of all tags attached to the account.
+    /// </summary>
+    public ICollection<AccountTag> Tags { get; } = null!;
+
+    /// <summary>
     /// Gets all group memberships for the account.
     /// </summary>
     public ICollection<GroupMembership> Memberships { get; } = null!;
