@@ -14,8 +14,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+
 builder.Services.AddScoped<IRoleInitializer, RoleInitializer>();
 builder.Services.AddScoped<IAccountManager, AccountManager>();
+
+builder.Services.AddHttpClient<SteamApi>(client => client.BaseAddress = new Uri("https://api.steampowered.com"));
+builder.Services.AddScoped<ISteamApi, SteamApi>();
 
 builder.Services.AddAuthentication(options =>
 {
