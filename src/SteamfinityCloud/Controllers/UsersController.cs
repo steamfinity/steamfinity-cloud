@@ -27,8 +27,8 @@ public sealed class UsersController : ControllerBase
     /// <param name="logger">The logger used to log controller actions.</param>
     public UsersController(UserManager<ApplicationUser> userManager, ILogger<UsersController> logger)
     {
-        _userManager = userManager;
-        _logger = logger;
+        _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>

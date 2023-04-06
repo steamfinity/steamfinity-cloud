@@ -20,8 +20,8 @@ public sealed class RoleInitializer : IRoleInitializer
     /// <param name="logger">The logger used to log messages during the role initialization process.</param>
     public RoleInitializer(RoleManager<ApplicationRole> roleManager, ILogger<RoleInitializer> logger)
     {
-        _roleManager = roleManager;
-        _logger = logger;
+        _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>

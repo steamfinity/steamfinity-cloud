@@ -15,9 +15,8 @@ public sealed class AccountManager : IAccountManager
     /// <param name="context">The application's database context.</param>
     public AccountManager(ApplicationDbContext context)
     {
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
-
 
     /// <summary>
     /// Gets all Steam accounts added to Steamfinity.
