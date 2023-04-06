@@ -12,7 +12,7 @@ using Steamfinity.Cloud;
 namespace Steamfinity.Cloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230406121250_InitialCreate")]
+    [Migration("20230406170312_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -361,8 +361,9 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<string>("AvatarUrl")
                         .HasColumnType("NVARCHAR2(2000)");
 
-                    b.Property<int>("Color")
-                        .HasColumnType("NUMBER(10)");
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("NVARCHAR2(2000)");
 
                     b.Property<decimal?>("CurrentGameId")
                         .HasColumnType("NUMBER(20)");
@@ -412,8 +413,8 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<string>("RealName")
                         .HasColumnType("NVARCHAR2(2000)");
 
-                    b.Property<int?>("Status")
-                        .HasColumnType("NUMBER(10)");
+                    b.Property<string>("Status")
+                        .HasColumnType("NVARCHAR2(2000)");
 
                     b.Property<decimal>("SteamId")
                         .HasColumnType("NUMBER(20)");
