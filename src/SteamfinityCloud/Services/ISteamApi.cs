@@ -17,12 +17,12 @@ public interface ISteamApi
     Task<ulong?> TryResolveSteamIdAsync(string input);
 
     /// <summary>
-    /// Refreshes the <paramref name="account"/> information with the data provided by the Steam API.
+    /// Attempts to refresh the <paramref name="account"/> information with the data provided by the Steam API.
     /// </summary>
     /// <param name="account">The account to refresh</param>
-    /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+    /// <returns>The <see cref="Task"/> that represents the asynchronous operation, returning <see langword="true"/> if the account is refreshed correctly, otherwise <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when the <paramref name="account"/> is <see langword="null"/>.</exception>
-    Task RefreshAccountAsync(SteamAccount account);
+    Task<bool> TryRefreshAccountAsync(SteamAccount account);
 
     /// <summary>
     /// Refreshes <paramref name="accounts"/> information with the data provided by the Steam API.

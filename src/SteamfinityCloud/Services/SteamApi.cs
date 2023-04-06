@@ -144,12 +144,12 @@ public sealed partial class SteamApi : ISteamApi
     }
 
     /// <summary>
-    /// Refreshes the <paramref name="account"/> information with the data provided by the Steam API.
+    /// Attempts to refresh the <paramref name="account"/> information with the data provided by the Steam API.
     /// </summary>
     /// <param name="account">The account to refresh</param>
-    /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+    /// <returns>The <see cref="Task"/> that represents the asynchronous operation, returning <see langword="true"/> if the account is refreshed correctly, otherwise <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when the <paramref name="account"/> is <see langword="null"/>.</exception>
-    public async Task RefreshAccountAsync(SteamAccount account)
+    public async Task<bool> TryRefreshAccountAsync(SteamAccount account)
     {
         if (account == null)
         {
@@ -158,11 +158,14 @@ public sealed partial class SteamApi : ISteamApi
 
         var steamIdString = account.SteamId.ToString();
 
+        // Downloads documents in parallel rather than one by one:
         var summaryDocumentTask = GetSummariesDocumentAsync(steamIdString);
         var bansDocumentTask = GetBansDocumentAsync(steamIdString);
 
-        ProcessSummaryDocument(account, await summaryDocumentTask);
-        ProcessBansDocument(account, await bansDocumentTask);
+        // The Entity Framework Core doesn't support parallel execution, so the documents must be processed individually.
+        // This will return false when the provided account has an invalid or non-existent SteamID:
+
+        return TryProcessSummaryDocument(account, await summaryDocumentTask) && TryProcessBansDocument(account, await bansDocumentTask);
     }
 
     /// <summary>
@@ -238,10 +241,19 @@ public sealed partial class SteamApi : ISteamApi
     /// </summary>
     /// <param name="account">The account to update.</param>
     /// <param name="document">The <see cref="JsonDocument"/> containing <paramref name="account"/> information.</param>
-    private static void ProcessSummaryDocument(SteamAccount account, JsonDocument document)
+    /// <returns><see langword="true"/> if the information is processed correctly, otherwise <see langword="false"/>.</returns>
+    private static bool TryProcessSummaryDocument(SteamAccount account, JsonDocument document)
     {
-        var playerElement = document.RootElement.GetProperty("response").GetProperty("players")[0];
-        UpdatePlayerSummary(account, playerElement);
+        var playersElement = document.RootElement.GetProperty("response").GetProperty("players");
+
+        // The array length will be zero if an incorrect/non-existent SteamID is provided:
+        if (playersElement.GetArrayLength() == 0)
+        {
+            return false;
+        }
+
+        UpdatePlayerSummary(account, playersElement[0]);
+        return true;
     }
 
     /// <summary>
@@ -273,10 +285,19 @@ public sealed partial class SteamApi : ISteamApi
     /// </summary>
     /// <param name="account">The account to update.</param>
     /// <param name="document">The <see cref="JsonDocument"/> containing the information about <paramref name="account"/> bans.</param>
-    private static void ProcessBansDocument(SteamAccount account, JsonDocument document)
+    /// <returns><see langword="true"/> if the information is processed correctly, otherwise <see langword="false"/>.</returns>
+    private static bool TryProcessBansDocument(SteamAccount account, JsonDocument document)
     {
-        var playerElement = document.RootElement.GetProperty("players")[0];
-        UpdatePlayerBans(account, playerElement);
+        var playersElement = document.RootElement.GetProperty("players");
+
+        // The array length will be zero if an incorrect/non-existent SteamID is provided:
+        if (playersElement.GetArrayLength() == 0)
+        {
+            return false;
+        }
+
+        UpdatePlayerBans(account, playersElement[0]);
+        return true;
     }
 
     /// <summary>
