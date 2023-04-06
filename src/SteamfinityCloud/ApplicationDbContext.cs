@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Steamfinity.Cloud.Entities;
+using Steamfinity.Cloud.Enums;
 
 namespace Steamfinity.Cloud;
 
@@ -54,6 +56,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
         builder.Entity<ApplicationUser>().HasMany(u => u.AccountShares).WithOne(s => s.User).HasForeignKey(s => s.UserId);
         builder.Entity<ApplicationUser>().HasMany(u => u.GroupShares).WithOne(s => s.User).HasForeignKey(s => s.UserId);
 
+        builder.Entity<SteamAccount>().Property(a => a.Color).HasConversion(new EnumToStringConverter<SimpleColor>());
+        builder.Entity<SteamAccount>().Property(a => a.Status).HasConversion(new EnumToStringConverter<AccountStatus>());
         builder.Entity<SteamAccount>().HasMany(a => a.Tags).WithOne(t => t.Account).HasForeignKey(t => t.AccountId);
         builder.Entity<SteamAccount>().HasMany(a => a.Memberships).WithOne(m => m.Account).HasForeignKey(m => m.AccountId);
         builder.Entity<SteamAccount>().HasMany(a => a.Shares).WithOne(s => s.Account).HasForeignKey(s => s.AccountId);
