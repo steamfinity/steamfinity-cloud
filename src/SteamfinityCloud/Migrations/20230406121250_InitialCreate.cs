@@ -80,6 +80,8 @@ namespace Steamfinity.Cloud.Migrations
                 {
                     Id = table.Column<Guid>(type: "RAW(16)", nullable: false),
                     OwnerId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    Alias = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    Color = table.Column<int>(type: "NUMBER(10)", nullable: false),
                     SteamId = table.Column<decimal>(type: "NUMBER(20)", nullable: false),
                     AccountName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     Password = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
@@ -209,6 +211,7 @@ namespace Steamfinity.Cloud.Migrations
                     OwnerId = table.Column<Guid>(type: "RAW(16)", nullable: false),
                     Name = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     Description = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    Color = table.Column<int>(type: "NUMBER(10)", nullable: false),
                     LaunchParameters = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     CreationTime = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: false)
                 },
@@ -247,6 +250,24 @@ namespace Steamfinity.Cloud.Migrations
                         name: "FK_AccountShares_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Tags",
+                columns: table => new
+                {
+                    AccountId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    Name = table.Column<string>(type: "NVARCHAR2(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tags", x => new { x.AccountId, x.Name });
+                    table.ForeignKey(
+                        name: "FK_Tags_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -371,6 +392,11 @@ namespace Steamfinity.Cloud.Migrations
                 name: "IX_Memberships_AccountId",
                 table: "Memberships",
                 column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tags_Name",
+                table: "Tags",
+                column: "Name");
         }
 
         /// <inheritdoc />
@@ -401,13 +427,16 @@ namespace Steamfinity.Cloud.Migrations
                 name: "Memberships");
 
             migrationBuilder.DropTable(
+                name: "Tags");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Accounts");
+                name: "Groups");
 
             migrationBuilder.DropTable(
-                name: "Groups");
+                name: "Accounts");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

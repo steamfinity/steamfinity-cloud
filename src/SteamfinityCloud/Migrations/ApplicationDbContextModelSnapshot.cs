@@ -131,6 +131,9 @@ namespace Steamfinity.Cloud.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("RAW(16)");
 
+                    b.Property<int>("Color")
+                        .HasColumnType("NUMBER(10)");
+
                     b.Property<DateTimeOffset>("CreationTime")
                         .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
 
@@ -178,6 +181,21 @@ namespace Steamfinity.Cloud.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AccountShares");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.AccountTag", b =>
+                {
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("NVARCHAR2(450)");
+
+                    b.HasKey("AccountId", "Name");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.ApplicationRole", b =>
@@ -334,8 +352,14 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<string>("AccountName")
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<string>("Alias")
+                        .HasColumnType("NVARCHAR2(2000)");
+
                     b.Property<string>("AvatarUrl")
                         .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<int>("Color")
+                        .HasColumnType("NUMBER(10)");
 
                     b.Property<decimal?>("CurrentGameId")
                         .HasColumnType("NUMBER(20)");
@@ -496,6 +520,17 @@ namespace Steamfinity.Cloud.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.AccountTag", b =>
+                {
+                    b.HasOne("Steamfinity.Cloud.Entities.SteamAccount", "Account")
+                        .WithMany("Tags")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("Steamfinity.Cloud.Entities.GroupMembership", b =>
                 {
                     b.HasOne("Steamfinity.Cloud.Entities.SteamAccount", "Account")
@@ -568,6 +603,8 @@ namespace Steamfinity.Cloud.Migrations
                     b.Navigation("Memberships");
 
                     b.Navigation("Shares");
+
+                    b.Navigation("Tags");
                 });
 #pragma warning restore 612, 618
         }
