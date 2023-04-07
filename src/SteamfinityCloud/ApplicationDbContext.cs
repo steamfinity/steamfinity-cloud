@@ -28,6 +28,11 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
     public required DbSet<Library> Libraries { get; init; }
 
     /// <summary>
+    /// Gets or sets the database set of all library memberships.
+    /// </summary>
+    public required DbSet<Membership> Memberships { get; init; }
+
+    /// <summary>
     /// Gets or sets the database set of all hashtags.
     /// </summary>
     public required DbSet<Hashtag> Hashtags { get; init; }
