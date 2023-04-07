@@ -28,9 +28,9 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
     public required DbSet<Library> Libraries { get; init; }
 
     /// <summary>
-    /// Gets or sets the database set of all account tags.
+    /// Gets or sets the database set of all hashtags.
     /// </summary>
-    public required DbSet<AccountTag> Tags { get; init; }
+    public required DbSet<Hashtag> Hashtags { get; init; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -38,6 +38,6 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
 
         builder.Entity<Account>().Property(a => a.Color).HasConversion(new EnumToStringConverter<SimpleColor>());
         builder.Entity<Account>().Property(a => a.Status).HasConversion(new EnumToStringConverter<AccountStatus>());
-        builder.Entity<Account>().HasMany(a => a.Tags).WithOne(t => t.Account).HasForeignKey(t => t.AccountId);
+        builder.Entity<Account>().HasMany(a => a.Hashtags).WithOne(t => t.Account).HasForeignKey(t => t.AccountId);
     }
 }

@@ -198,7 +198,7 @@ public sealed class Account
     public string? Notes { get; set; }
 
     /// <summary>
-    /// Gets the collection of all tags attached to the account.
+    /// Gets the collection of all hashtags added to the account.
     /// </summary>
-    public ICollection<AccountTag> Tags { get; } = null!;
+    public ICollection<Hashtag> Hashtags { get; } = null!;
 }
