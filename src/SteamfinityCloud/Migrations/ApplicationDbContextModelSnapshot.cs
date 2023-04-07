@@ -369,15 +369,12 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("RAW(16)");
 
-                    b.Property<Guid?>("ApplicationUserId")
-                        .HasColumnType("RAW(16)");
-
                     b.Property<int>("Role")
                         .HasColumnType("NUMBER(10)");
 
                     b.HasKey("LibraryId", "UserId");
 
-                    b.HasIndex("ApplicationUserId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Memberships");
                 });
@@ -435,11 +432,13 @@ namespace Steamfinity.Cloud.Migrations
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Account", b =>
                 {
-                    b.HasOne("Steamfinity.Cloud.Entities.Library", null)
+                    b.HasOne("Steamfinity.Cloud.Entities.Library", "Library")
                         .WithMany("Accounts")
                         .HasForeignKey("LibraryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Library");
                 });
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Hashtag", b =>
@@ -453,15 +452,21 @@ namespace Steamfinity.Cloud.Migrations
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Membership", b =>
                 {
-                    b.HasOne("Steamfinity.Cloud.Entities.ApplicationUser", null)
-                        .WithMany("Memberships")
-                        .HasForeignKey("ApplicationUserId");
-
-                    b.HasOne("Steamfinity.Cloud.Entities.Library", null)
+                    b.HasOne("Steamfinity.Cloud.Entities.Library", "Library")
                         .WithMany("Memberships")
                         .HasForeignKey("LibraryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Steamfinity.Cloud.Entities.ApplicationUser", "User")
+                        .WithMany("Memberships")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Library");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Account", b =>

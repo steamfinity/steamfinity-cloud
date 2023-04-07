@@ -223,17 +223,17 @@ namespace Steamfinity.Cloud.Migrations
                 {
                     LibraryId = table.Column<Guid>(type: "RAW(16)", nullable: false),
                     UserId = table.Column<Guid>(type: "RAW(16)", nullable: false),
-                    Role = table.Column<int>(type: "NUMBER(10)", nullable: false),
-                    ApplicationUserId = table.Column<Guid>(type: "RAW(16)", nullable: true)
+                    Role = table.Column<int>(type: "NUMBER(10)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Memberships", x => new { x.LibraryId, x.UserId });
                     table.ForeignKey(
-                        name: "FK_Memberships_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
+                        name: "FK_Memberships_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Memberships_Libraries_LibraryId",
                         column: x => x.LibraryId,
@@ -315,9 +315,9 @@ namespace Steamfinity.Cloud.Migrations
                 column: "Name");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Memberships_ApplicationUserId",
+                name: "IX_Memberships_UserId",
                 table: "Memberships",
-                column: "ApplicationUserId");
+                column: "UserId");
         }
 
         /// <inheritdoc />
