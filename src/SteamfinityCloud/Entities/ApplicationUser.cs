@@ -26,4 +26,12 @@ public sealed class ApplicationUser : IdentityUser<Guid>
     /// This value is updated with every successful authentication token renewal.
     /// </summary>
     public DateTimeOffset? LastSignInTime { get; set; }
+
+    /// <summary>
+    /// Gets the collection of all library memberships of the user.
+    /// </summary>
+    /// <remarks>
+    /// This collection includes private libraries that are not shared.
+    /// </remarks>
+    public ICollection<Membership> Memberships { get; } = null!;
 }
