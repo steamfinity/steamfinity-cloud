@@ -41,7 +41,13 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<Account>().Property(a => a.Color).HasConversion(new EnumToStringConverter<SimpleColor>());
-        builder.Entity<Account>().Property(a => a.Status).HasConversion(new EnumToStringConverter<AccountStatus>());
+        // Handle string <-> enum conversions:
+        _ = builder.Entity<Account>().Property(a => a.Color).HasConversion(new EnumToStringConverter<SimpleColor>());
+        _ = builder.Entity<Account>().Property(a => a.Status).HasConversion(new EnumToStringConverter<AccountStatus>());
+
+        // Configure relationships:
+        _ = builder.Entity<ApplicationUser>().HasMany(u => u.Memberships).WithOne(m => m.User).HasForeignKey(m => m.UserId);
+        _ = builder.Entity<Library>().HasMany(l => l.Memberships).WithOne(m => m.Library).HasForeignKey(m => m.LibraryId);
+        _ = builder.Entity<Library>().HasMany(l => l.Accounts).WithOne(a => a.Library).HasForeignKey(a => a.LibraryId);
     }
 }
