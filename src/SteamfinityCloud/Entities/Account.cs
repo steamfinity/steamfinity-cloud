@@ -201,14 +201,4 @@ public sealed class Account
     /// Gets the collection of all tags attached to the account.
     /// </summary>
     public ICollection<AccountTag> Tags { get; } = null!;
-
-    /// <summary>
-    /// Gets all group memberships for the account.
-    /// </summary>
-    public ICollection<GroupMembership> Memberships { get; } = null!;
-
-    /// <summary>
-    /// Gets all shares of the account.
-    /// </summary>
-    public ICollection<AccountShare> Shares { get; } = null!;
 }
