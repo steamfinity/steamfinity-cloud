@@ -12,6 +12,9 @@ public sealed class Membership
     /// <summary>
     /// Gets or sets the identifier of the library that the user is a member of.
     /// </summary>
+    /// <remarks>
+    /// This is an internal database entity and should not be exposed to the client.
+    /// </remarks>
     public required Guid LibraryId { get; init; }
 
     /// <summary>
