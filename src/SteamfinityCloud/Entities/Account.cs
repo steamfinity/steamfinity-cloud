@@ -18,16 +18,6 @@ public sealed class Account
     public Guid Id { get; init; }
 
     /// <summary>
-    /// Gets or sets the identifier of the user that is the owner of the account.
-    /// </summary>  
-    public required Guid OwnerId { get; init; }
-
-    /// <summary>
-    /// Gets the user that is the owner of the account.
-    /// </summary>
-    public ApplicationUser Owner { get; } = null!;
-
-    /// <summary>
     /// Gets or sets the alias for the account.
     /// </summary>
     public string? Alias { get; set; }
