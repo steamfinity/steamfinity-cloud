@@ -32,5 +32,5 @@ public sealed class GroupMembership
     /// <summary>
     /// Gets the account that is a member of a group.
     /// </summary>
-    public SteamAccount Account { get; } = null!;
+    public Account Account { get; } = null!;
 }

@@ -20,7 +20,7 @@ public sealed class AccountTag
     /// <summary>
     /// Gets the account that the tag is attached to.
     /// </summary>
-    public SteamAccount Account { get; } = null!;
+    public Account Account { get; } = null!;
 
     /// <summary>
     /// Gets or sets the name of the tag.

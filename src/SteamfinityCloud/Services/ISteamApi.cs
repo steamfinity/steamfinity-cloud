@@ -22,7 +22,7 @@ public interface ISteamApi
     /// <param name="account">The account to refresh</param>
     /// <returns>The <see cref="Task"/> that represents the asynchronous operation, returning <see langword="true"/> if the account is refreshed correctly, otherwise <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when the <paramref name="account"/> is <see langword="null"/>.</exception>
-    Task<bool> TryRefreshAccountAsync(SteamAccount account);
+    Task<bool> TryRefreshAccountAsync(Account account);
 
     /// <summary>
     /// Refreshes <paramref name="accounts"/> information with the data provided by the Steam API.
@@ -30,5 +30,5 @@ public interface ISteamApi
     /// <param name="accounts">The query providing write access to the accounts.</param>
     /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="accounts"/> are <see langword="null"/>.</exception>
-    Task RefreshAccountsAsync(IQueryable<SteamAccount> accounts);
+    Task RefreshAccountsAsync(IQueryable<Account> accounts);
 }

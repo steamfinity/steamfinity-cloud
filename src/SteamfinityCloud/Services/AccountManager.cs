@@ -21,5 +21,5 @@ public sealed class AccountManager : IAccountManager
     /// <summary>
     /// Gets all Steam accounts added to Steamfinity.
     /// </summary>
-    public IQueryable<SteamAccount> Accounts => _context.Accounts;
+    public IQueryable<Account> Accounts => _context.Accounts;
 }

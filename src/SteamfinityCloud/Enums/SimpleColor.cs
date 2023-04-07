@@ -3,7 +3,7 @@
 namespace Steamfinity.Cloud.Enums;
 
 /// <summary>
-/// Represents a color associated with <see cref="SteamAccount"/> or <see cref="AccountGroup"/>.
+/// Represents a color associated with <see cref="Account"/> or <see cref="AccountGroup"/>.
 /// </summary>
 public enum SimpleColor
 {

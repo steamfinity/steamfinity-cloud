@@ -10,7 +10,7 @@ namespace Steamfinity.Cloud.Entities;
 /// This is an internal database entity and should not be exposed to the client.
 /// </remarks>
 [Index(nameof(SteamId))]
-public sealed class SteamAccount
+public sealed class Account
 {
     /// <summary>
     /// Gets or sets the unique identifier of the account.

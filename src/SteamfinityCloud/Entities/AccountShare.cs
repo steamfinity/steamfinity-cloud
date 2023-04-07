@@ -19,7 +19,7 @@ public sealed class AccountShare
     /// <summary>
     /// Gets the shared account.
     /// </summary>
-    public SteamAccount Account { get; } = null!;
+    public Account Account { get; } = null!;
 
     /// <summary>
     /// Gets or sets the identifier of the user whom the account is shared with.

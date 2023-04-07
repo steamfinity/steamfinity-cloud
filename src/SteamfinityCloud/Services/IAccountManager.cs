@@ -10,5 +10,5 @@ public interface IAccountManager
     /// <summary>
     /// Gets all Steam accounts added to Steamfinity.
     /// </summary>
-    IQueryable<SteamAccount> Accounts { get; }
+    IQueryable<Account> Accounts { get; }
 }

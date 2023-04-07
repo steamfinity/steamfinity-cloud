@@ -149,7 +149,7 @@ public sealed partial class SteamApi : ISteamApi
     /// <param name="account">The account to refresh</param>
     /// <returns>The <see cref="Task"/> that represents the asynchronous operation, returning <see langword="true"/> if the account is refreshed correctly, otherwise <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when the <paramref name="account"/> is <see langword="null"/>.</exception>
-    public async Task<bool> TryRefreshAccountAsync(SteamAccount account)
+    public async Task<bool> TryRefreshAccountAsync(Account account)
     {
         if (account == null)
         {
@@ -174,7 +174,7 @@ public sealed partial class SteamApi : ISteamApi
     /// <param name="accounts">The query providing write access to the accounts.</param>
     /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="accounts"/> are <see langword="null"/>.</exception>
-    public async Task RefreshAccountsAsync(IQueryable<SteamAccount> accounts)
+    public async Task RefreshAccountsAsync(IQueryable<Account> accounts)
     {
         if (accounts == null)
         {
@@ -242,7 +242,7 @@ public sealed partial class SteamApi : ISteamApi
     /// <param name="account">The account to update.</param>
     /// <param name="document">The <see cref="JsonDocument"/> containing <paramref name="account"/> information.</param>
     /// <returns><see langword="true"/> if the information is processed correctly, otherwise <see langword="false"/>.</returns>
-    private static bool TryProcessSummaryDocument(SteamAccount account, JsonDocument document)
+    private static bool TryProcessSummaryDocument(Account account, JsonDocument document)
     {
         var playersElement = document.RootElement.GetProperty("response").GetProperty("players");
 
@@ -262,7 +262,7 @@ public sealed partial class SteamApi : ISteamApi
     /// <param name="accounts">The query providing write access to the accounts.</param>
     /// <param name="document">The <see cref="JsonDocument"/> containing <paramref name="accounts"/> information.</param>
     /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
-    private static async Task ProcessSummariesDocumentAsync(IQueryable<SteamAccount> accounts, JsonDocument document)
+    private static async Task ProcessSummariesDocumentAsync(IQueryable<Account> accounts, JsonDocument document)
     {
         var playersElement = document.RootElement.GetProperty("response").GetProperty("players");
         foreach (var playerElement in playersElement.EnumerateArray())
@@ -286,7 +286,7 @@ public sealed partial class SteamApi : ISteamApi
     /// <param name="account">The account to update.</param>
     /// <param name="document">The <see cref="JsonDocument"/> containing the information about <paramref name="account"/> bans.</param>
     /// <returns><see langword="true"/> if the information is processed correctly, otherwise <see langword="false"/>.</returns>
-    private static bool TryProcessBansDocument(SteamAccount account, JsonDocument document)
+    private static bool TryProcessBansDocument(Account account, JsonDocument document)
     {
         var playersElement = document.RootElement.GetProperty("players");
 
@@ -306,7 +306,7 @@ public sealed partial class SteamApi : ISteamApi
     /// <param name="accounts">The query providing write access to the accounts.</param>
     /// <param name="document">The <see cref="JsonDocument"/> containing the information about <paramref name="accounts"/> bans.</param>
     /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
-    private static async Task ProcessBansDocumentAsync(IQueryable<SteamAccount> accounts, JsonDocument document)
+    private static async Task ProcessBansDocumentAsync(IQueryable<Account> accounts, JsonDocument document)
     {
         var playersElement = document.RootElement.GetProperty("players");
         foreach (var playerElement in playersElement.EnumerateArray())
@@ -330,7 +330,7 @@ public sealed partial class SteamApi : ISteamApi
     /// <param name="account">The account to update.</param>
     /// <param name="playerElement">The <see cref="JsonElement"/> containing the information.</param>
     /// <exception cref="InvalidOperationException">Thrown when invalid data is returned from the Steam API.</exception>
-    private static void UpdatePlayerSummary(SteamAccount account, JsonElement playerElement)
+    private static void UpdatePlayerSummary(Account account, JsonElement playerElement)
     {
         if (playerElement.TryGetProperty("personaname", out var profileNameElement))
         {
@@ -440,7 +440,7 @@ public sealed partial class SteamApi : ISteamApi
     /// </summary>
     /// <param name="account">The account to update.</param>
     /// <param name="playerElement">The <see cref="JsonElement"/> containing the information.</param>
-    private static void UpdatePlayerBans(SteamAccount account, JsonElement playerElement)
+    private static void UpdatePlayerBans(Account account, JsonElement playerElement)
     {
         account.IsCommunityBanned = playerElement.GetProperty("CommunityBanned").GetBoolean();
         account.NumberOfVACBans = playerElement.GetProperty("NumberOfVACBans").GetInt32();

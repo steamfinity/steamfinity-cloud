@@ -30,7 +30,7 @@ public sealed class ApplicationUser : IdentityUser<Guid>
     /// <summary>
     /// Gets all accounts added by the user.
     /// </summary>
-    public ICollection<SteamAccount> OwnedAccounts { get; } = null!;
+    public ICollection<Account> OwnedAccounts { get; } = null!;
 
     /// <summary>
     /// Gets all groups added by the user.
