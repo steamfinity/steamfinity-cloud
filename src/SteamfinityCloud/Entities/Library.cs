@@ -29,6 +29,11 @@ public sealed class Library
     public DateTimeOffset CreationTime { get; init; } = DateTimeOffset.UtcNow;
 
     /// <summary>
+    /// Gets the collection of all memberships in this library.
+    /// </summary>
+    public ICollection<Membership> Memberships { get; } = null!;
+
+    /// <summary>
     /// Gets the collection of all Steam accounts that belong to the library.
     /// </summary>
     public ICollection<Account> Accounts { get; } = null!;
