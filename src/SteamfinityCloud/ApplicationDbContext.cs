@@ -43,6 +43,5 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
 
         builder.Entity<Account>().Property(a => a.Color).HasConversion(new EnumToStringConverter<SimpleColor>());
         builder.Entity<Account>().Property(a => a.Status).HasConversion(new EnumToStringConverter<AccountStatus>());
-        builder.Entity<Account>().HasMany(a => a.Hashtags).WithOne(t => t.Account).HasForeignKey(t => t.AccountId);
     }
 }
