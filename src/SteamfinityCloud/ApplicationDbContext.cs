@@ -23,6 +23,11 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Ap
     public required DbSet<Account> Accounts { get; init; }
 
     /// <summary>
+    /// Gets or sets the database set of all Steam account libraries.
+    /// </summary>
+    public required DbSet<Library> Libraries { get; init; }
+
+    /// <summary>
     /// Gets or sets the database set of all account tags.
     /// </summary>
     public required DbSet<AccountTag> Tags { get; init; }
