@@ -18,6 +18,16 @@ public sealed class Account
     public Guid Id { get; init; }
 
     /// <summary>
+    /// Gets or sets the identifier of the library that the account belongs to.
+    /// </summary>
+    public required Guid LibraryId { get; init; }
+
+    /// <summary>
+    /// Gets the library that the account belongs to.
+    /// </summary>
+    public Library Library { get; } = null!;
+
+    /// <summary>
     /// Gets or sets the alias for the account.
     /// </summary>
     public string? Alias { get; set; }
