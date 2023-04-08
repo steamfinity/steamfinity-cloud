@@ -21,5 +21,5 @@ public sealed class LimitProvider : ILimitProvider
 
     public int MaxMembersPerLibrary => _configuration.GetValue("Limits:MaxMembersPerLibrary", 100);
 
-    public int MaxAccountsPerLibrary => _configuration.GetValue("Limits:MaxMembersPerLibrary", 100);
+    public int MaxAccountsPerLibrary => _configuration.GetValue("Limits:MaxAccountsPerLibrary", 100);
 }
