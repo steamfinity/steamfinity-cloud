@@ -16,6 +16,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseOracle
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
 builder.Services.AddScoped<IRoleInitializer, RoleInitializer>();
+builder.Services.AddScoped<ILimitProvider, LimitProvider>();
 builder.Services.AddScoped<IAccountManager, AccountManager>();
 
 builder.Services.AddScoped<ISteamApi, SteamApi>();
