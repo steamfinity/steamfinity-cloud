@@ -17,7 +17,6 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFramew
 
 builder.Services.AddScoped<IRoleInitializer, RoleInitializer>();
 builder.Services.AddScoped<ILimitProvider, LimitProvider>();
-builder.Services.AddScoped<IAccountManager, AccountManager>();
 
 builder.Services.AddScoped<ISteamApi, SteamApi>();
 builder.Services.AddHttpClient<ISteamApi, SteamApi>(client => client.BaseAddress = new Uri("https://api.steampowered.com"));
