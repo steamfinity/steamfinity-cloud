@@ -50,11 +50,13 @@ public sealed record AccountDetails
 
     public required DateTimeOffset? LastEditTime { get; set; }
 
-    public required DateTimeOffset? LastUpdateTime { get; set; }
+    public required DateTimeOffset? LastUpdateTime { get; init; }
 
-    public required DateTimeOffset? CreationTime { get; set; }
+    public required DateTimeOffset? CompetitiveCooldownExpirationTime { get; init; }
 
-    public required DateTimeOffset? LastSignOutTime { get; set; }
+    public required DateTimeOffset? CreationTime { get; init; }
+
+    public required DateTimeOffset? LastSignOutTime { get; init; }
 
     public required string? LaunchParameters { get; init; }
 

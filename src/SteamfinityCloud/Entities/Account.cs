@@ -60,6 +60,8 @@ public sealed class Account
 
     public DateTimeOffset? LastUpdateTime { get; set; }
 
+    public DateTimeOffset? CompetitiveCooldownExpirationTime { get; set; }
+
     public DateTimeOffset? CreationTime { get; set; }
 
     public DateTimeOffset? LastSignOutTime { get; set; }

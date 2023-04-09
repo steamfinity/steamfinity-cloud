@@ -94,6 +94,7 @@ public sealed class AccountsController : ControllerBase
             AdditionTime = account.AdditionTime,
             LastEditTime = account.LastEditTime,
             LastUpdateTime = account.LastUpdateTime,
+            CompetitiveCooldownExpirationTime = account.CompetitiveCooldownExpirationTime,
             CreationTime = account.CreationTime,
             LastSignOutTime = account.LastSignOutTime,
             LaunchParameters = account.LaunchParameters,
