@@ -6,9 +6,10 @@ namespace Steamfinity.Cloud.Models;
 public sealed record LibraryCreationRequest
 {
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MinLength(PropertyLengthConstraints.MinLibraryNameLength)]
+    [MaxLength(PropertyLengthConstraints.MaxLibraryNameLength)]
     public required string Name { get; init; }
 
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxLibraryDescriptionLength)]
     public string? Description { get; init; }
 }

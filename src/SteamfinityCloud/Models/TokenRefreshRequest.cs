@@ -9,6 +9,6 @@ public sealed record TokenRefreshRequest
     public required Guid UserId { get; init; }
 
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxOtherLenght)]
     public required string RefreshToken { get; init; }
 }

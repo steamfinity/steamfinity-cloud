@@ -7,6 +7,6 @@ public sealed record ForceEmailChangeRequest
 {
     [Required]
     [EmailAddress]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxEmailLength)]
     public required string NewEmail { get; init; }
 }

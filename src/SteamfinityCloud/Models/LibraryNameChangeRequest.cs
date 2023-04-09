@@ -6,6 +6,7 @@ namespace Steamfinity.Cloud.Models;
 public sealed record LibraryNameChangeRequest
 {
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MinLength(PropertyLengthConstraints.MinLibraryNameLength)]
+    [MaxLength(PropertyLengthConstraints.MaxLibraryNameLength)]
     public required string NewName { get; init; }
 }

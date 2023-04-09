@@ -6,6 +6,7 @@ namespace Steamfinity.Cloud.Models;
 public sealed record UserNameChangeRequest
 {
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MinLength(PropertyLengthConstraints.MinUserNameLength)]
+    [MaxLength(PropertyLengthConstraints.MaxUserNameLength)]
     public required string NewUserName { get; init; }
 }

@@ -5,6 +5,6 @@ namespace Steamfinity.Cloud.Models;
 
 public sealed record AccountAliasChangeRequest
 {
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxAliasLength)]
     public string? NewAlias { get; init; }
 }

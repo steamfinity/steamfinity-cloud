@@ -6,10 +6,10 @@ namespace Steamfinity.Cloud.Models;
 public sealed record SignInRequest
 {
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxOtherLenght)]
     public required string UserName { get; init; }
 
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxOtherLenght)]
     public required string Password { get; init; }
 }

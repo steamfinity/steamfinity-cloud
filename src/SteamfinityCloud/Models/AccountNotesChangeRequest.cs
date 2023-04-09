@@ -5,6 +5,6 @@ namespace Steamfinity.Cloud.Models;
 
 public sealed record AccountNotesChangeRequest
 {
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxNotesLength)]
     public string? NewNotes { get; init; }
 }

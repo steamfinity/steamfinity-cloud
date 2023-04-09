@@ -9,6 +9,6 @@ public sealed record AccountAdditionRequest
     public required Guid LibraryId { get; init; }
 
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxOtherLenght)]
     public required string SteamId { get; init; }
 }

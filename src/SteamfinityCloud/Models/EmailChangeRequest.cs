@@ -7,10 +7,11 @@ public sealed record EmailChangeRequest
 {
     [Required]
     [EmailAddress]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MinLength(PropertyLengthConstraints.MinEmailLength)]
+    [MaxLength(PropertyLengthConstraints.MaxEmailLength)]
     public required string NewEmail { get; init; }
 
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxOtherLenght)]
     public required string Password { get; init; }
 }

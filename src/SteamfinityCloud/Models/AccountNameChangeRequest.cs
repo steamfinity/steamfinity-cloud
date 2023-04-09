@@ -5,6 +5,6 @@ namespace Steamfinity.Cloud.Models;
 
 public sealed record AccountNameChangeRequest
 {
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxAccountNameLength)]
     public string? NewAccountName { get; init; }
 }

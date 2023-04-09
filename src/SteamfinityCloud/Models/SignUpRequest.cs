@@ -6,13 +6,14 @@ namespace Steamfinity.Cloud.Models;
 public sealed record SignUpRequest
 {
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MinLength(PropertyLengthConstraints.MinUserNameLength)]
+    [MaxLength(PropertyLengthConstraints.MaxUserNameLength)]
     public required string UserName { get; init; }
 
     [Required]
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxOtherLenght)]
     public required string Password { get; init; }
 
-    [MaxLength(OtherConstants.DefaultMaximumLenght)]
+    [MaxLength(PropertyLengthConstraints.MaxOtherLenght)]
     public string? AdministratorSignUpKey { get; init; }
 }
