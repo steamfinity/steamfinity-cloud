@@ -42,8 +42,6 @@ public sealed record AccountDetails
 
     public int? NumberOfDaysSinceLastBan { get; init; }
 
-    public string? LaunchParameters { get; init; }
-
     public required DateTimeOffset AdditionTime { get; init; }
 
     public DateTimeOffset? LastEditTime { get; set; }
@@ -53,6 +51,8 @@ public sealed record AccountDetails
     public DateTimeOffset? CreationTime { get; set; }
 
     public DateTimeOffset? LastSignOutTime { get; set; }
+
+    public string? LaunchParameters { get; init; }
 
     public string? Notes { get; init; }
 }

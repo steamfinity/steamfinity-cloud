@@ -12,15 +12,15 @@ public sealed class Account
 
     public Library Library { get; } = null!;
 
-    public string? Alias { get; set; }
-
-    public SimpleColor Color { get; set; }
-
     public required ulong SteamId { get; init; }
 
     public string? AccountName { get; set; }
 
     public string? Password { get; set; }
+
+    public string? Alias { get; set; }
+
+    public SimpleColor Color { get; set; }
 
     public string? ProfileName { get; set; }
 
@@ -50,8 +50,6 @@ public sealed class Account
 
     public int? NumberOfDaysSinceLastBan { get; set; }
 
-    public string? LaunchParameters { get; set; }
-
     public DateTimeOffset AdditionTime { get; init; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset? LastEditTime { get; set; }
@@ -61,6 +59,8 @@ public sealed class Account
     public DateTimeOffset? CreationTime { get; set; }
 
     public DateTimeOffset? LastSignOutTime { get; set; }
+
+    public string? LaunchParameters { get; set; }
 
     public string? Notes { get; set; }
 
