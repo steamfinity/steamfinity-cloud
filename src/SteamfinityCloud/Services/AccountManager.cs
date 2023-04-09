@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
 
@@ -54,6 +55,36 @@ public sealed class AccountManager : IAccountManager
         _ = await _context.SaveChangesAsync();
 
         return AccountAdditionResult.Success;
+    }
+
+    public async Task<HashtagsSetResult> SetHashtagsAsync(Account account, IEnumerable<string> hashtags)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+        ArgumentNullException.ThrowIfNull(hashtags, nameof(hashtags));
+
+        if (!await _context.Accounts.AnyAsync(a => a.Id == account.Id))
+        {
+            return HashtagsSetResult.AccountNotFound;
+        }
+
+        if (hashtags.Count() > _limitProvider.MaxHashtagsPerAccount)
+        {
+            return HashtagsSetResult.HashtagLimitExceeded;
+        }
+
+        _context.Hashtags.RemoveRange(_context.Hashtags.Where(h => h.AccountId == account.Id));
+        foreach (var hashtag in hashtags.Distinct())
+        {
+            if (hashtag.Length is < PropertyLengthConstraints.MinHashtagLength or > PropertyLengthConstraints.MaxHashtagLength)
+            {
+                return HashtagsSetResult.InvalidHashtags;
+            }
+
+            _ = await _context.Hashtags.AddAsync(new Hashtag(account.Id, hashtag));
+        }
+
+        _ = await _context.SaveChangesAsync();
+        return HashtagsSetResult.Success;
     }
 
     public async Task UpdateAsync(Account account)

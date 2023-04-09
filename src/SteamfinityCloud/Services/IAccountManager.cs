@@ -11,6 +11,8 @@ public interface IAccountManager
 
     Task<AccountAdditionResult> AddAsync(Account account);
 
+    Task<HashtagsSetResult> SetHashtagsAsync(Account account, IEnumerable<string> hashtags);
+
     Task UpdateAsync(Account account);
 
     Task DeleteAsync(Account account);

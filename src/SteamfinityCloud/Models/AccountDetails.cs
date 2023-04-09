@@ -63,4 +63,6 @@ public sealed record AccountDetails
     public required string? LaunchParameters { get; init; }
 
     public required string? Notes { get; init; }
+
+    public required IEnumerable<string> Hashtags { get; init; }
 }

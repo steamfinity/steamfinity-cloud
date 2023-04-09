@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
@@ -57,7 +59,11 @@ public sealed class AccountsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<AccountDetails>> GetAccountAsync(Guid accountId)
     {
-        var account = await _accountManager.FindByIdAsync(accountId);
+        var account = await _accountManager.Accounts
+                            .Where(a => a.Id == accountId)
+                            .Include(a => a.Hashtags)
+                            .FirstOrDefaultAsync();
+
         if (account == null)
         {
             return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
@@ -99,7 +105,8 @@ public sealed class AccountsController : ControllerBase
             CreationTime = account.CreationTime,
             LastSignOutTime = account.LastSignOutTime,
             LaunchParameters = account.LaunchParameters,
-            Notes = account.Notes
+            Notes = account.Notes,
+            Hashtags = account.Hashtags.Select(h => h.Name).AsEnumerable()
         };
 
         return Ok(details);
@@ -289,6 +296,48 @@ public sealed class AccountsController : ControllerBase
 
         account.Notes = request.NewNotes;
         await _accountManager.UpdateAsync(account);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{accountId}/hashtags")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> SetHashtagsAsync(Guid accountId, AccountHashtagsSetRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+        }
+
+        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+        }
+
+        var result = await _accountManager.SetHashtagsAsync(account, request.NewHashtags);
+
+        if (result == HashtagsSetResult.AccountNotFound)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+        }
+
+        if (result == HashtagsSetResult.HashtagLimitExceeded)
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "hashtag-limit-exceeded");
+        }
+
+        if (result == HashtagsSetResult.InvalidHashtags)
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "invalid-hashtags");
+        }
 
         return NoContent();
     }

@@ -7,4 +7,6 @@ public interface ILimitProvider
     int MaxMembersPerLibrary { get; }
 
     int MaxAccountsPerLibrary { get; }
+
+    int MaxHashtagsPerAccount { get; }
 }
