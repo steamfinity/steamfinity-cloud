@@ -12,7 +12,7 @@ using Steamfinity.Cloud;
 namespace Steamfinity.Cloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230408224606_InitialCreate")]
+    [Migration("20230409191908_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -137,6 +137,9 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<string>("AccountName")
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<DateTimeOffset>("AdditionTime")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
                     b.Property<string>("Alias")
                         .HasColumnType("NVARCHAR2(2000)");
 
@@ -147,11 +150,20 @@ namespace Steamfinity.Cloud.Migrations
                         .IsRequired()
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<DateTimeOffset?>("CompetitiveCooldownExpirationTime")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<DateTimeOffset?>("CreationTime")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
                     b.Property<decimal?>("CurrentGameId")
                         .HasColumnType("NUMBER(20)");
 
                     b.Property<string>("CurrentGameName")
                         .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<bool>("HasPrimeStatus")
+                        .HasColumnType("NUMBER(1)");
 
                     b.Property<bool?>("IsCommentingAllowed")
                         .HasColumnType("NUMBER(1)");
@@ -159,11 +171,23 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<bool?>("IsCommunityBanned")
                         .HasColumnType("NUMBER(1)");
 
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("NUMBER(1)");
+
                     b.Property<bool?>("IsProfileSetUp")
                         .HasColumnType("NUMBER(1)");
 
                     b.Property<bool?>("IsProfileVisible")
                         .HasColumnType("NUMBER(1)");
+
+                    b.Property<DateTimeOffset?>("LastEditTime")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<DateTimeOffset?>("LastSignOutTime")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<DateTimeOffset?>("LastUpdateTime")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
 
                     b.Property<string>("LaunchParameters")
                         .HasColumnType("NVARCHAR2(2000)");
@@ -195,26 +219,14 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<string>("RealName")
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<int>("SkillGroup")
+                        .HasColumnType("NUMBER(10)");
+
                     b.Property<string>("Status")
                         .HasColumnType("NVARCHAR2(2000)");
 
                     b.Property<decimal>("SteamId")
                         .HasColumnType("NUMBER(20)");
-
-                    b.Property<DateTimeOffset>("TimeAdded")
-                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
-
-                    b.Property<DateTimeOffset?>("TimeCreated")
-                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
-
-                    b.Property<DateTimeOffset?>("TimeEdited")
-                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
-
-                    b.Property<DateTimeOffset?>("TimeSignedOut")
-                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
-
-                    b.Property<DateTimeOffset?>("TimeUpdated")
-                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
 
                     b.HasKey("Id");
 
