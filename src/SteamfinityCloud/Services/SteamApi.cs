@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
 using Steamfinity.Cloud.Exceptions;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -124,10 +125,7 @@ public sealed partial class SteamApi : ISteamApi
 
     public async Task<bool> TryRefreshAccountAsync(Account account)
     {
-        if (account == null)
-        {
-            throw new ArgumentNullException(nameof(account));
-        }
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
 
         var steamIdString = account.SteamId.ToString();
 
@@ -143,10 +141,7 @@ public sealed partial class SteamApi : ISteamApi
 
     public async Task RefreshAccountsAsync(IQueryable<Account> accounts)
     {
-        if (accounts == null)
-        {
-            throw new ArgumentNullException(nameof(accounts));
-        }
+        ArgumentNullException.ThrowIfNull(accounts, nameof(accounts));
 
         // Ignore accounts that have been updated recently to speed up the request and save Steam API quota:
         var steamIds = accounts

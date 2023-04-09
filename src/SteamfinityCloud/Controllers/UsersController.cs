@@ -31,6 +31,8 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ChangeUserNameAsync(UserNameChangeRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var user = await _userManager.GetUserAsync(User);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -76,6 +78,8 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ChangeUserNameAsync(Guid userId, UserNameChangeRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var user = await _userManager.FindByIdAsync(userId.ToString());
         var administratorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -118,6 +122,8 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ChangeEmailAsync(EmailChangeRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var user = await _userManager.GetUserAsync(User);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -169,6 +175,8 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ChangeEmailAsync(Guid userId, ForceEmailChangeRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var user = await _userManager.FindByIdAsync(userId.ToString());
         var administratorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -210,6 +218,8 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ChangePasswordAsync(PasswordChangeRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var user = await _userManager.GetUserAsync(User);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -254,6 +264,8 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ResetPasswordAsync(Guid userId, PasswordResetRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var user = await _userManager.FindByIdAsync(userId.ToString());
         var administratorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -292,6 +304,8 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> DeleteUserAsync(UserDeletionRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var user = await _userManager.GetUserAsync(User);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 

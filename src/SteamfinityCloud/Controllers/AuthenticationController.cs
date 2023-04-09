@@ -40,6 +40,8 @@ public sealed class AuthenticationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SignUpAsync(SignUpRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var addToAdministratorRole = false;
         if (!string.IsNullOrWhiteSpace(request.AdministratorSignUpKey))
         {
@@ -111,6 +113,8 @@ public sealed class AuthenticationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<RefreshTokenDetails>> SignInAsync(SignInRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var user = await _userManager.FindByNameAsync(request.UserName);
         if (user == null)
         {
@@ -167,6 +171,8 @@ public sealed class AuthenticationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<AuthenticationTokenDetails>> RefreshTokenAsync(TokenRefreshRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
         var user = await _userManager.FindByIdAsync(request.UserId.ToString());
         if (user == null)
         {
