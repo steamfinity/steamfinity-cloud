@@ -11,9 +11,6 @@ using System.Text;
 
 namespace Steamfinity.Cloud.Controllers;
 
-/// <summary>
-/// The controller responsible for user authentication.
-/// </summary>
 [ApiController]
 [Route("api/authentication")]
 public sealed class AuthenticationController : ControllerBase
@@ -23,13 +20,6 @@ public sealed class AuthenticationController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly ILogger _logger;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="AuthenticationController"/> class.
-    /// </summary>
-    /// <param name="userManager">The user manager to handle user-related operations.</param>
-    /// <param name="signInManager">The sign-in manager to handle user authentication.</param>
-    /// <param name="configuration">The configuration interface to access application settings.</param>
-    /// <param name="logger">The logger to write diagnostic messages.</param>
     public AuthenticationController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
@@ -42,12 +32,6 @@ public sealed class AuthenticationController : ControllerBase
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>
-    /// Sign-ups the user with the provided username and password.
-    /// </summary>
-    /// <param name="request">The sign-up request model containing the username and password.</param>
-    /// <returns>The <see cref="Task"/> that represents the asynchronous operation, containing the <see cref="IActionResult"/> of the operation.</returns>
-    /// <exception cref="IdentityException">Thrown when an identity occurs during the user creation.</exception>
     [HttpPost("sign-up")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -119,14 +103,6 @@ public sealed class AuthenticationController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Sign-ins the user with the provided credentials and creates a refresh token that can be used to generate temporary authentication tokens.
-    /// </summary>
-    /// <param name="request">The sign-in request model containing the username and password.</param>
-    /// <returns>
-    /// The <see cref="Task"/> that represents the asynchronous operation, containing the <see cref="ActionResult{RefreshTokenDetails}"/> of the operation.<br/>
-    /// The <see cref="RefreshTokenDetails"/> instance provides the information about the refresh token.
-    /// </returns>
     [HttpPost("sign-in")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -181,14 +157,6 @@ public sealed class AuthenticationController : ControllerBase
         return Ok(tokenDetails);
     }
 
-    /// <summary>
-    /// Creates a temporary JWT bearer authentication token for the specified user using a refresh token.
-    /// </summary>
-    /// <param name="request">The token refresh request model containing the user ID and a refresh token.</param>
-    /// <returns>
-    /// The <see cref="Task"/> that represents the asynchronous operation, containing the <see cref="ActionResult{RefreshTokenDetails}"/> of the operation.<br/>
-    /// The <see cref="AuthenticationTokenDetails"/> instance provides the information about the authentication token.
-    /// </returns>
     [HttpPost("refresh-token")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -228,13 +196,6 @@ public sealed class AuthenticationController : ControllerBase
         return Ok(tokenDetails);
     }
 
-    /// <summary>
-    /// Adds the user to the specified role.
-    /// </summary>
-    /// <param name="user">The user to add to the role.</param>
-    /// <param name="roleName">The name of the role to add the user to.</param>
-    /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
-    /// <exception cref="IdentityException">Thrown when an identity error occurs while attempting to add the user to the role.</exception>
     private async Task AddUserToRoleAsync(ApplicationUser user, string roleName)
     {
         var userAdditionResult = await _userManager.AddToRoleAsync(user, roleName);
@@ -249,13 +210,6 @@ public sealed class AuthenticationController : ControllerBase
         _logger.LogInformation("The user '{userId}' has been successfully added to the '{roleName}' role.", user.Id, roleName);
     }
 
-    /// <summary>
-    /// Creates a JWT bearer authentication token with the specified claims and lifetime.
-    /// </summary>
-    /// <param name="claims">The claims to include in the token.</param>
-    /// <param name="lifetime">The lifetime of the token.</param>
-    /// <returns>The created JWT bearer authentication token.</returns>
-    /// <exception cref="ConfigurationMissingException">Thrown when the JWT bearer authentication issuer signing key is not configured in the app settings.</exception>
     private string CreateJwtBearerAuthenticationToken(IEnumerable<Claim> claims, TimeSpan lifetime)
     {
         var issuerSigningKey = _configuration["Authentication:Schemes:Bearer:IssuerSigningKey"];

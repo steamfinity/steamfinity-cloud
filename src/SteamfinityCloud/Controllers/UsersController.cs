@@ -9,9 +9,6 @@ using System.Security.Claims;
 
 namespace Steamfinity.Cloud.Controllers;
 
-/// <summary>
-/// The controller responsible for user account management.
-/// </summary>
 [ApiController]
 [Route("api/users")]
 [Authorize(PolicyNames.Users)]
@@ -20,23 +17,12 @@ public sealed class UsersController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger _logger;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="UsersController"/> class.
-    /// </summary>
-    /// <param name="userManager">The user manager used to manage users.</param>
-    /// <param name="logger">The logger used to log controller actions.</param>
     public UsersController(UserManager<ApplicationUser> userManager, ILogger<UsersController> logger)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>
-    /// Changes the username of the currently authenticated user.
-    /// </summary>
-    /// <param name="request">The user name change request model, containing the new username.</param>
-    /// <returns>A <see cref="Task"/> that represents the asynchronous operation, containing the action result.</returns>
-    /// <exception cref="IdentityException">Throw when an unhandled identity error occurs.</exception>
     [HttpPatch("current/user-name")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -79,14 +65,6 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Changes the username of the specified user.
-    /// </summary>
-    /// <remarks>Calling this method requires the user to have the administrator role.</remarks>
-    /// <param name="userId">The identifier of the user whose name is being changed.</param>
-    /// <param name="request">The user name change request model, containing the new username.</param>
-    /// <returns>A <see cref="Task"/> that represents the asynchronous operation, containing the action result.</returns>
-    /// <exception cref="IdentityException">Thrown when an unhandled identity error occurs.</exception>
     [HttpPatch("{userId}/user-name")]
     [Authorize(PolicyNames.Administrators)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -132,12 +110,6 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Changes the email address of the currently authenticated user.
-    /// </summary>
-    /// <param name="request">The email address change request model, containing the new email address.</param>
-    /// <returns>A <see cref="Task"/> that represents the asynchronous operation, containing the action result.</returns>
-    /// <exception cref="IdentityException">Thrown when an unhandled identity error occurs.</exception>
     [HttpPatch("current/email")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -186,14 +158,6 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Changes the email address of the specified user.
-    /// </summary>
-    /// <remarks>Calling this method requires the user to have the administrator role.</remarks>
-    /// <param name="userId">The identifier of the user whose email address is being changed.</param>
-    /// <param name="request">The email address change request model, containing the new email address.</param>
-    /// <returns>A <see cref="Task"/> that represents the asynchronous operation, containing the action result.</returns>
-    /// <exception cref="IdentityException"></exception>
     [HttpPatch("{userId}/email")]
     [Authorize(PolicyNames.Administrators)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -239,12 +203,6 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Changes the password of the currently authenticated users.
-    /// </summary>
-    /// <param name="request">The password change request model, containing both current password and the new password.</param>
-    /// <returns>A <see cref="Task"/> that represents the asynchronous operation, containing the action result.</returns>
-    /// <exception cref="IdentityException">Thrown when an unhandled identity error occurs.</exception>
     [HttpPatch("current/password")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -287,14 +245,6 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Resets the password of the specified user.
-    /// </summary>
-    /// <remarks>Calling this method requires the user to have the administrator role.</remarks>
-    /// <param name="userId">The identifier of the user whose password is being reset.</param>
-    /// <param name="request">The password reset request model, containing the new password.</param>
-    /// <returns>A <see cref="Task"/> that represents the asynchronous operation, containing the action result.</returns>
-    /// <exception cref="IdentityException">Thrown when an unhandled identity error occurs.</exception>
     [HttpPatch("{userId}/password")]
     [Authorize(PolicyNames.Administrators)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -335,12 +285,6 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Permanently deletes the account of the currently authenticated user.
-    /// </summary>
-    /// <param name="request">The user deletion request model containing the user's password.</param>
-    /// <returns>A <see cref="Task"/> that represents the asynchronous operation, containing the action result.</returns>
-    /// <exception cref="IdentityException">Thrown when an unhandled identity error occurs.</exception>
     [HttpDelete("current")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -375,13 +319,6 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Permanently deletes the account of the specified user.
-    /// </summary>
-    /// <remarks>Calling this method requires the user to have the administrator role.</remarks>
-    /// <param name="userId">The identifier of the user whose account is being deleted.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation, containing the action result.</returns>
-    /// <exception cref="IdentityException">Thrown when an unhandled identity error occurs.</exception>
     [HttpDelete("{userId}")]
     [Authorize(PolicyNames.Administrators)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

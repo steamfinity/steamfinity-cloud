@@ -5,41 +5,23 @@ using Steamfinity.Cloud.Exceptions;
 
 namespace Steamfinity.Cloud.Services;
 
-/// <summary>
-/// Initializes the roles in the Steamfinity Cloud authorization system.
-/// </summary>
 public sealed class RoleInitializer : IRoleInitializer
 {
     private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly ILogger _logger;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RoleInitializer"/> class.
-    /// </summary>
-    /// <param name="roleManager">The role manager used to manage roles in the application.</param>
-    /// <param name="logger">The logger used to log messages during the role initialization process.</param>
     public RoleInitializer(RoleManager<ApplicationRole> roleManager, ILogger<RoleInitializer> logger)
     {
         _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>
-    /// Initializes the roles in the Steamfinity Cloud authorization system. Roles that already exist will be skipped.
-    /// Make sure to call this method on application startup.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task InitializeRolesAsync()
     {
         await CreateRoleAsync(RoleNames.User);
         await CreateRoleAsync(RoleNames.Administrator);
     }
 
-    /// <summary>
-    /// Creates a new role with the specified name if it does not already exist.
-    /// </summary>
-    /// <param name="roleName">The name of the role to create.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
     private async Task CreateRoleAsync(string roleName)
     {
         if (await _roleManager.RoleExistsAsync(roleName))

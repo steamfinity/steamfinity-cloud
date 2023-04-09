@@ -2,9 +2,6 @@
 
 namespace Steamfinity.Cloud.Enums;
 
-/// <summary>
-/// Represents a color associated with <see cref="Account"/> or <see cref="AccountGroup"/>.
-/// </summary>
 public enum SimpleColor
 {
     None,
