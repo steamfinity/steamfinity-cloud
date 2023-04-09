@@ -27,7 +27,6 @@ public sealed record SignUpRequest
     /// When the correct administrator sign-up key is provided, the user is automatically added<br/>
     /// to the administrator role.
     /// </summary>
-    [Required]
     [MaxLength(OtherConstants.DefaultMaximumLenght)]
-    public required string AdministratorSignUpKey { get; init; }
+    public string? AdministratorSignUpKey { get; init; }
 }
