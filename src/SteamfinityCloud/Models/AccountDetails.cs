@@ -12,6 +12,8 @@ public sealed record AccountDetails
 
     public string? Alias { get; init; }
 
+    public bool IsFavorite { get; init; }
+
     public SimpleColor Color { get; init; }
 
     public string? ProfileName { get; init; }

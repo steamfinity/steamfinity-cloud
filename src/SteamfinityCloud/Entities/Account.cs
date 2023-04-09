@@ -20,6 +20,8 @@ public sealed class Account
 
     public string? Alias { get; set; }
 
+    public bool IsFavorite { get; set; }
+
     public SimpleColor Color { get; set; }
 
     public string? ProfileName { get; set; }
