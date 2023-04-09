@@ -37,6 +37,7 @@ public sealed class AuthenticationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SignUpAsync(SignUpRequest request)
     {
         var addToAdministratorRole = false;
@@ -105,7 +106,9 @@ public sealed class AuthenticationController : ControllerBase
 
     [HttpPost("sign-in")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<RefreshTokenDetails>> SignInAsync(SignInRequest request)
     {
         var user = await _userManager.FindByNameAsync(request.UserName);
@@ -159,7 +162,9 @@ public sealed class AuthenticationController : ControllerBase
 
     [HttpPost("refresh-token")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<AuthenticationTokenDetails>> RefreshTokenAsync(TokenRefreshRequest request)
     {
         var user = await _userManager.FindByIdAsync(request.UserId.ToString());

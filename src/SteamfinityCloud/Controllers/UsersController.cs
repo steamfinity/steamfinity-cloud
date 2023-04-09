@@ -287,6 +287,7 @@ public sealed class UsersController : ControllerBase
 
     [HttpDelete("current")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> DeleteUserAsync(UserDeletionRequest request)
@@ -322,6 +323,7 @@ public sealed class UsersController : ControllerBase
     [HttpDelete("{userId}")]
     [Authorize(PolicyNames.Administrators)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
