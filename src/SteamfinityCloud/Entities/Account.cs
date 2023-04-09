@@ -44,6 +44,8 @@ public sealed class Account
 
     public string? CurrentGameName { get; set; }
 
+    public bool HasPrimeStatus { get; set; }
+
     public SkillGroup SkillGroup { get; set; }
 
     public bool? IsCommunityBanned { get; set; }

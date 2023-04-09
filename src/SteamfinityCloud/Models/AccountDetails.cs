@@ -36,6 +36,8 @@ public sealed record AccountDetails
 
     public required string? CurrentGameName { get; init; }
 
+    public required bool HasPrimeStatus { get; init; }
+
     public required SkillGroup SkillGroup { get; init; }
 
     public required bool? IsCommunityBanned { get; init; }
