@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Steamfinity.Cloud.Models;
 
-public sealed class LibraryCreationRequest
+public sealed record LibraryCreationRequest
 {
     [Required]
     [MaxLength(OtherConstants.DefaultMaximumLenght)]
