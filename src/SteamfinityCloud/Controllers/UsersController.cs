@@ -5,6 +5,7 @@ using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Models;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace Steamfinity.Cloud.Controllers;
@@ -21,6 +22,29 @@ public sealed class UsersController : ControllerBase
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    [HttpGet("find-by-user-name")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserSearchResult>> FindUserByNameAsync([Required] string userName)
+    {
+        ArgumentNullException.ThrowIfNull(userName, nameof(userName));
+
+        var user = await _userManager.FindByNameAsync(userName);
+        if (user == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "user-not-found");
+        }
+
+        var result = new UserSearchResult
+        {
+            UserId = user.Id
+        };
+
+        return Ok(result);
     }
 
     [HttpPatch("current/user-name")]
