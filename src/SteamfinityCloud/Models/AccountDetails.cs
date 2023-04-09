@@ -10,53 +10,53 @@ public sealed record AccountDetails
 
     public required ulong SteamId { get; init; }
 
-    public string? Alias { get; init; }
+    public required string? Alias { get; init; }
 
-    public bool IsFavorite { get; init; }
+    public required bool IsFavorite { get; init; }
 
-    public SimpleColor Color { get; init; }
+    public required SimpleColor Color { get; init; }
 
-    public string? ProfileName { get; init; }
+    public required string? ProfileName { get; init; }
 
-    public string? RealName { get; init; }
+    public required string? RealName { get; init; }
 
-    public string? AvatarUrl { get; init; }
+    public required string? AvatarUrl { get; init; }
 
-    public string? ProfileUrl { get; init; }
+    public required string? ProfileUrl { get; init; }
 
-    public bool? IsProfileSetUp { get; init; }
+    public required bool? IsProfileSetUp { get; init; }
 
-    public bool? IsProfileVisible { get; init; }
+    public required bool? IsProfileVisible { get; init; }
 
-    public bool? IsCommentingAllowed { get; init; }
+    public required bool? IsCommentingAllowed { get; init; }
 
-    public AccountStatus? Status { get; init; }
+    public required AccountStatus? Status { get; init; }
 
-    public ulong? CurrentGameId { get; init; }
+    public required ulong? CurrentGameId { get; init; }
 
-    public string? CurrentGameName { get; init; }
+    public required string? CurrentGameName { get; init; }
 
     public required SkillGroup SkillGroup { get; init; }
 
-    public bool? IsCommunityBanned { get; init; }
+    public required bool? IsCommunityBanned { get; init; }
 
-    public int? NumberOfVACBans { get; init; }
+    public required int? NumberOfVACBans { get; init; }
 
-    public int? NumberOfGameBans { get; init; }
+    public required int? NumberOfGameBans { get; init; }
 
-    public int? NumberOfDaysSinceLastBan { get; init; }
+    public required int? NumberOfDaysSinceLastBan { get; init; }
 
     public required DateTimeOffset AdditionTime { get; init; }
 
-    public DateTimeOffset? LastEditTime { get; set; }
+    public required DateTimeOffset? LastEditTime { get; set; }
 
-    public DateTimeOffset? LastUpdateTime { get; set; }
+    public required DateTimeOffset? LastUpdateTime { get; set; }
 
-    public DateTimeOffset? CreationTime { get; set; }
+    public required DateTimeOffset? CreationTime { get; set; }
 
-    public DateTimeOffset? LastSignOutTime { get; set; }
+    public required DateTimeOffset? LastSignOutTime { get; set; }
 
-    public string? LaunchParameters { get; init; }
+    public required string? LaunchParameters { get; init; }
 
-    public string? Notes { get; init; }
+    public required string? Notes { get; init; }
 }
