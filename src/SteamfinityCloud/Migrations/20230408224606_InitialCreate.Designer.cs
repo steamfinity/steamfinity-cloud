@@ -12,7 +12,7 @@ using Steamfinity.Cloud;
 namespace Steamfinity.Cloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230407151218_InitialCreate")]
+    [Migration("20230408224606_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
