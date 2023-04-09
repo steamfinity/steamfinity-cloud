@@ -1,5 +1,4 @@
-﻿using Steamfinity.Cloud.Entities;
-using Steamfinity.Cloud.Enums;
+﻿using Steamfinity.Cloud.Enums;
 
 namespace Steamfinity.Cloud.Models;
 
@@ -15,45 +14,45 @@ public sealed record AccountDetails
 
     public SimpleColor Color { get; init; }
 
-    public string? ProfileName { get; set; }
+    public string? ProfileName { get; init; }
 
-    public string? RealName { get; set; }
+    public string? RealName { get; init; }
 
-    public string? AvatarUrl { get; set; }
+    public string? AvatarUrl { get; init; }
 
-    public string? ProfileUrl { get; set; }
+    public string? ProfileUrl { get; init; }
 
-    public bool? IsProfileSetUp { get; set; }
+    public bool? IsProfileSetUp { get; init; }
 
-    public bool? IsProfileVisible { get; set; }
+    public bool? IsProfileVisible { get; init; }
 
-    public bool? IsCommentingAllowed { get; set; }
+    public bool? IsCommentingAllowed { get; init; }
 
-    public AccountStatus? Status { get; set; }
+    public AccountStatus? Status { get; init; }
 
-    public ulong? CurrentGameId { get; set; }
+    public ulong? CurrentGameId { get; init; }
 
-    public string? CurrentGameName { get; set; }
+    public string? CurrentGameName { get; init; }
 
-    public bool? IsCommunityBanned { get; set; }
+    public bool? IsCommunityBanned { get; init; }
 
-    public int? NumberOfVACBans { get; set; }
+    public int? NumberOfVACBans { get; init; }
 
-    public int? NumberOfGameBans { get; set; }
+    public int? NumberOfGameBans { get; init; }
 
-    public int? NumberOfDaysSinceLastBan { get; set; }
+    public int? NumberOfDaysSinceLastBan { get; init; }
 
-    public string? LaunchParameters { get; set; }
+    public string? LaunchParameters { get; init; }
 
-    public DateTimeOffset? CreationTime { get; set; }
+    public DateTimeOffset? CreationTime { get; init; }
 
-    public DateTimeOffset? LastSignOutTime { get; set; }
+    public DateTimeOffset? LastSignOutTime { get; init; }
 
     public required DateTimeOffset AdditionTime { get; init; }
 
-    public DateTimeOffset? LastEditTimer { get; set; }
+    public DateTimeOffset? LastEditTimer { get; init; }
 
-    public DateTimeOffset? LastUpdateTime { get; set; }
+    public DateTimeOffset? LastUpdateTime { get; init; }
 
-    public string? Notes { get; set; }
+    public string? Notes { get; init; }
 }
