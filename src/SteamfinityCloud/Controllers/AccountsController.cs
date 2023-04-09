@@ -165,60 +165,6 @@ public sealed class AccountsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("{accountId}/alias")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ChangeAliasAsync(Guid accountId, AccountAliasChangeRequest request)
-    {
-        ArgumentNullException.ThrowIfNull(request, nameof(request));
-
-        var account = await _accountManager.FindByIdAsync(accountId);
-        if (account == null)
-        {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
-        }
-
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
-        {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
-        }
-
-        account.Alias = request.NewAlias;
-        await _accountManager.UpdateAsync(account);
-
-        return NoContent();
-    }
-
-    [HttpPatch("{accountId}/color")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ChangeColorAsync(Guid accountId, AccountColorChangeRequest request)
-    {
-        ArgumentNullException.ThrowIfNull(request, nameof(request));
-
-        var account = await _accountManager.FindByIdAsync(accountId);
-        if (account == null)
-        {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
-        }
-
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
-        {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
-        }
-
-        account.Color = request.NewColor;
-        await _accountManager.UpdateAsync(account);
-
-        return NoContent();
-    }
-
     [HttpPatch("{accountId}/account-name")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -241,6 +187,8 @@ public sealed class AccountsController : ControllerBase
         }
 
         account.AccountName = request.NewAccountName;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
         await _accountManager.UpdateAsync(account);
 
         return NoContent();
@@ -268,6 +216,182 @@ public sealed class AccountsController : ControllerBase
         }
 
         account.Password = request.NewPassword;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
+        await _accountManager.UpdateAsync(account);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{accountId}/alias")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangeAliasAsync(Guid accountId, AccountAliasChangeRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+        }
+
+        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+        }
+
+        account.Alias = request.NewAlias;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
+        await _accountManager.UpdateAsync(account);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{accountId}/is-favorite")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangeIsFavoriteAsync(Guid accountId, AccountIsFavoriteChangeRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+        }
+
+        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+        }
+
+        account.IsFavorite = request.NewIsFavorite;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
+        await _accountManager.UpdateAsync(account);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{accountId}/color")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangeColorAsync(Guid accountId, AccountColorChangeRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+        }
+
+        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+        }
+
+        account.Color = request.NewColor;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
+        await _accountManager.UpdateAsync(account);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{accountId}/has-prime-status")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangeHasPrimeStatusAsync(Guid accountId, AccountHasPrimeStatusChangeRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+        }
+
+        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+        }
+
+        account.HasPrimeStatus = request.NewHasPrimeStatus;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
+        await _accountManager.UpdateAsync(account);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{accountId}/skill-group")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangeSkillGroupAsync(Guid accountId, SkillGroupChangeRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+        }
+
+        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+        }
+
+        account.SkillGroup = request.NewSkillGroup;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
+        await _accountManager.UpdateAsync(account);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{accountId}/launch-parameters")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangeLaunchParametersAsync(Guid accountId, LaunchParametersChangeRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+        }
+
+        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+        }
+
+        account.LaunchParameters = request.NewLaunchParameters;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
         await _accountManager.UpdateAsync(account);
 
         return NoContent();
@@ -295,6 +419,8 @@ public sealed class AccountsController : ControllerBase
         }
 
         account.Notes = request.NewNotes;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
         await _accountManager.UpdateAsync(account);
 
         return NoContent();
@@ -338,6 +464,9 @@ public sealed class AccountsController : ControllerBase
         {
             return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "invalid-hashtags");
         }
+
+        account.LastEditTime = DateTimeOffset.UtcNow;
+        await _accountManager.UpdateAsync(account);
 
         return NoContent();
     }
