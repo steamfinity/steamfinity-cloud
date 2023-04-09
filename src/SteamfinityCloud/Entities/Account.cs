@@ -8,7 +8,7 @@ public sealed class Account
 {
     public Guid Id { get; init; }
 
-    public required Guid LibraryId { get; init; }
+    public required Guid LibraryId { get; set; }
 
     public Library Library { get; } = null!;
 

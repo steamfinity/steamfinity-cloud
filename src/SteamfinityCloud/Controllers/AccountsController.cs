@@ -471,6 +471,48 @@ public sealed class AccountsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPatch("{accountId}/library")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> TransferAccountAsync(Guid accountId, AccountTransferRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+        }
+
+        // Ensure the user has permission to manage accounts in the current library:
+        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+        }
+
+        // Ensure the user has permission to manage accounts in the new library:
+        if (!await _permissionManager.CanManageAccountsAsync(request.NewLibraryId, UserId))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+        }
+
+        // Prevent the account from being moved to the same library it is currently in:
+        if (account.LibraryId == request.NewLibraryId)
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "already-transfered");
+        }
+
+        account.LibraryId = request.NewLibraryId;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
+        await _accountManager.UpdateAsync(account);
+
+        return NoContent();
+    }
+
     [HttpDelete("{accountId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
