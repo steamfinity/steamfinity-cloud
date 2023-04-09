@@ -44,6 +44,8 @@ public sealed class Account
 
     public string? CurrentGameName { get; set; }
 
+    public SkillGroup SkillGroup { get; set; }
+
     public bool? IsCommunityBanned { get; set; }
 
     public int? NumberOfVACBans { get; set; }

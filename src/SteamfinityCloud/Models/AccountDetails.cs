@@ -36,6 +36,8 @@ public sealed record AccountDetails
 
     public string? CurrentGameName { get; init; }
 
+    public required SkillGroup SkillGroup { get; init; }
+
     public bool? IsCommunityBanned { get; init; }
 
     public int? NumberOfVACBans { get; init; }

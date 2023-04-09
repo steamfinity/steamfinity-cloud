@@ -86,6 +86,7 @@ public sealed class AccountsController : ControllerBase
             Status = account.Status,
             CurrentGameId = account.CurrentGameId,
             CurrentGameName = account.CurrentGameName,
+            SkillGroup = account.SkillGroup,
             IsCommunityBanned = account.IsCommunityBanned,
             NumberOfVACBans = account.NumberOfVACBans,
             NumberOfGameBans = account.NumberOfGameBans,
