@@ -44,15 +44,15 @@ public sealed record AccountDetails
 
     public string? LaunchParameters { get; init; }
 
-    public DateTimeOffset? CreationTime { get; init; }
-
-    public DateTimeOffset? LastSignOutTime { get; init; }
-
     public required DateTimeOffset AdditionTime { get; init; }
 
-    public DateTimeOffset? LastEditTimer { get; init; }
+    public DateTimeOffset? LastEditTime { get; set; }
 
-    public DateTimeOffset? LastUpdateTime { get; init; }
+    public DateTimeOffset? LastUpdateTime { get; set; }
+
+    public DateTimeOffset? CreationTime { get; set; }
+
+    public DateTimeOffset? LastSignOutTime { get; set; }
 
     public string? Notes { get; init; }
 }

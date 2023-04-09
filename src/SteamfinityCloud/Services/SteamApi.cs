@@ -145,7 +145,7 @@ public sealed partial class SteamApi : ISteamApi
 
         // Ignore accounts that have been updated recently to speed up the request and save Steam API quota:
         var steamIds = accounts
-                       .Where(account => !account.TimeUpdated.HasValue || DateTimeOffset.UtcNow - account.TimeUpdated.Value > TimeSpan.FromSeconds(10))
+                       .Where(account => !account.LastUpdateTime.HasValue || DateTimeOffset.UtcNow - account.LastUpdateTime.Value > TimeSpan.FromSeconds(10))
                        .Select(account => account.SteamId)
                        .AsAsyncEnumerable();
 
@@ -349,21 +349,21 @@ public sealed partial class SteamApi : ISteamApi
             account.CurrentGameName = null;
         }
 
-        if (playerElement.TryGetProperty("timecreated", out var timeCreatedElement))
+        if (playerElement.TryGetProperty("timecreated", out var creationTimeElement))
         {
-            account.TimeCreated = DateTimeOffset.FromUnixTimeSeconds(timeCreatedElement.GetInt64());
+            account.CreationTime = DateTimeOffset.FromUnixTimeSeconds(creationTimeElement.GetInt64());
         }
 
-        if (playerElement.TryGetProperty("lastlogoff", out var timeSignedOutElement))
+        if (playerElement.TryGetProperty("lastlogoff", out var lastSignOutTimeElement))
         {
-            account.TimeSignedOut = DateTimeOffset.FromUnixTimeSeconds(timeSignedOutElement.GetInt64());
+            account.LastSignOutTime = DateTimeOffset.FromUnixTimeSeconds(lastSignOutTimeElement.GetInt64());
         }
         else
         {
-            account.TimeSignedOut = null;
+            account.LastSignOutTime = null;
         }
 
-        account.TimeUpdated = DateTimeOffset.UtcNow;
+        account.LastUpdateTime = DateTimeOffset.UtcNow;
     }
 
     private static void UpdatePlayerBans(Account account, JsonElement playerElement)
@@ -373,7 +373,7 @@ public sealed partial class SteamApi : ISteamApi
         account.NumberOfGameBans = playerElement.GetProperty("NumberOfGameBans").GetInt32();
         account.NumberOfDaysSinceLastBan = playerElement.GetProperty("DaysSinceLastBan").GetInt32();
 
-        account.TimeUpdated = DateTimeOffset.UtcNow;
+        account.LastUpdateTime = DateTimeOffset.UtcNow;
     }
 
     private async Task<ulong?> TryResolveVanityUrlAsync(string vanityUrl)

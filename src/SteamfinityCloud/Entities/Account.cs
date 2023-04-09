@@ -52,15 +52,15 @@ public sealed class Account
 
     public string? LaunchParameters { get; set; }
 
-    public DateTimeOffset? TimeCreated { get; set; }
+    public DateTimeOffset AdditionTime { get; init; } = DateTimeOffset.UtcNow;
 
-    public DateTimeOffset? TimeSignedOut { get; set; }
+    public DateTimeOffset? LastEditTime { get; set; }
 
-    public DateTimeOffset TimeAdded { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? LastUpdateTime { get; set; }
 
-    public DateTimeOffset? TimeEdited { get; set; }
+    public DateTimeOffset? CreationTime { get; set; }
 
-    public DateTimeOffset? TimeUpdated { get; set; }
+    public DateTimeOffset? LastSignOutTime { get; set; }
 
     public string? Notes { get; set; }
 

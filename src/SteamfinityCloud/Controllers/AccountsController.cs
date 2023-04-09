@@ -90,11 +90,11 @@ public sealed class AccountsController : ControllerBase
             NumberOfGameBans = account.NumberOfGameBans,
             NumberOfDaysSinceLastBan = account.NumberOfDaysSinceLastBan,
             LaunchParameters = account.LaunchParameters,
-            CreationTime = account.TimeCreated,
-            LastSignOutTime = account.TimeSignedOut,
-            AdditionTime = account.TimeAdded,
-            LastEditTimer = account.TimeEdited,
-            LastUpdateTime = account.TimeUpdated,
+            CreationTime = account.CreationTime,
+            LastSignOutTime = account.LastSignOutTime,
+            AdditionTime = account.AdditionTime,
+            LastEditTime = account.LastEditTime,
+            LastUpdateTime = account.LastUpdateTime,
             Notes = account.Notes
         };
 
