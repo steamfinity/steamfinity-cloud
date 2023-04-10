@@ -272,6 +272,7 @@ public sealed partial class SteamApi : ISteamApi
         else
         {
             account.ProfileName = null;
+            account.OptimizedProfileName = null;
         }
 
         if (playerElement.TryGetProperty("realname", out var realNameElement))
@@ -282,6 +283,7 @@ public sealed partial class SteamApi : ISteamApi
         else
         {
             account.RealName = null;
+            account.OptimizedRealName = null;
         }
 
         if (playerElement.TryGetProperty("avatarfull", out var avatarUrlElement))
@@ -301,6 +303,7 @@ public sealed partial class SteamApi : ISteamApi
         else
         {
             account.ProfileUrl = null;
+            account.OptimizedProfileUrl = null;
         }
 
         if (playerElement.TryGetProperty("profilestate", out var isProfileSetUpElement))
@@ -370,6 +373,7 @@ public sealed partial class SteamApi : ISteamApi
         else
         {
             account.CurrentGameName = null;
+            account.OptimizedCurrentGameName = null;
         }
 
         if (playerElement.TryGetProperty("timecreated", out var creationTimeElement))
