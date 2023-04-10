@@ -4,8 +4,6 @@ public static class PropertyLengthConstraints
 {
     public const int MinUserNameLength = 3;
     public const int MaxUserNameLength = 16;
-    public const int MinEmailLength = 3;
-    public const int MaxEmailLength = 320;
 
     public const int MinLibraryNameLength = 1;
     public const int MaxLibraryNameLength = 32;
