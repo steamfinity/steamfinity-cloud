@@ -2,16 +2,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Constants;
-using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Services;
-using System.Security.Claims;
 
 namespace Steamfinity.Cloud.Controllers;
 
 [ApiController]
 [Route("api/hashtags")]
 [Authorize(PolicyNames.Users)]
-public sealed class HashtagsController : ControllerBase
+public sealed class HashtagsController : SteamfinityController
 {
     private readonly IMembershipManager _membershipManager;
 
@@ -20,23 +18,9 @@ public sealed class HashtagsController : ControllerBase
         _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
     }
 
-    private Guid UserId
-    {
-        get
-        {
-            var nameIdentifier = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("The user authentication token is missing the NameIdentifier claim.");
-
-            if (!Guid.TryParse(nameIdentifier, out var userId))
-            {
-                throw new InvalidOperationException("The user authentication token NameIdentifier claim is not a valid GUID.");
-            }
-
-            return userId;
-        }
-    }
-
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<IAsyncEnumerable<string>> GetAllHashtagsAsync()
     {
         var hashtags = _membershipManager.Memberships

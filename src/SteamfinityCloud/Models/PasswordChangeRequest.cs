@@ -5,9 +5,8 @@ namespace Steamfinity.Cloud.Models;
 
 public sealed record PasswordChangeRequest
 {
-    [Required]
     [MaxLength(PropertyLengthConstraints.MaxOtherLenght)]
-    public required string CurrentPassword { get; init; }
+    public string? CurrentPassword { get; init; }
 
     [Required]
     [MaxLength(PropertyLengthConstraints.MaxOtherLenght)]

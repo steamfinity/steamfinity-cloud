@@ -7,14 +7,13 @@ using Steamfinity.Cloud.Enums;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
 using System.Data;
-using System.Security.Claims;
 
 namespace Steamfinity.Cloud.Controllers;
 
 [ApiController]
 [Route("api/libraries")]
 [Authorize(PolicyNames.Users)]
-public sealed class LibrariesController : ControllerBase
+public sealed class LibrariesController : SteamfinityController
 {
     private readonly ILibraryManager _libraryManager;
     private readonly IMembershipManager _membershipManager;
@@ -31,22 +30,6 @@ public sealed class LibrariesController : ControllerBase
         _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
         _permissionManager = permissionManager ?? throw new ArgumentNullException(nameof(permissionManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
-    }
-
-    private Guid UserId
-    {
-        get
-        {
-            var nameIdentifier = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("The user authentication token is missing the NameIdentifier claim.");
-
-            if (!Guid.TryParse(nameIdentifier, out var userId))
-            {
-                throw new InvalidOperationException("The user authentication token NameIdentifier claim is not a valid GUID.");
-            }
-
-            return userId;
-        }
     }
 
     [HttpGet]
@@ -89,7 +72,7 @@ public sealed class LibrariesController : ControllerBase
 
         if (result == LibraryCreationResult.LibraryLimitExceeded)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "library-limit-exceeded");
+            return ApiError(StatusCodes.Status403Forbidden, "LIBRARY_LIMIT_EXCEEDED", "You are already a member of the maximum number of libraries.");
         }
 
         return NoContent();
@@ -106,12 +89,12 @@ public sealed class LibrariesController : ControllerBase
         var library = await _libraryManager.FindByIdAsync(libraryId);
         if (library == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
-        if (!await _permissionManager.CanViewLibraryAsync(libraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(libraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of this library.");
         }
 
         var details = new LibraryDetails
@@ -140,12 +123,12 @@ public sealed class LibrariesController : ControllerBase
         var library = await _libraryManager.FindByIdAsync(libraryId);
         if (library == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageLibrary(libraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageLibrary(libraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage this library.");
         }
 
         library.Name = request.NewName;
@@ -168,12 +151,12 @@ public sealed class LibrariesController : ControllerBase
         var library = await _libraryManager.FindByIdAsync(libraryId);
         if (library == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageLibrary(libraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageLibrary(libraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage this library.");
         }
 
         library.Description = request.NewDescription;
@@ -193,12 +176,12 @@ public sealed class LibrariesController : ControllerBase
     {
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
-        if (!await _permissionManager.CanViewLibraryAsync(libraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(libraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of this library.");
         }
 
         var overviews = _membershipManager.Memberships
@@ -229,34 +212,34 @@ public sealed class LibrariesController : ControllerBase
 
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageMembersAsync(libraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageMembersAsync(libraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage users in this library.");
         }
 
         var result = await _membershipManager.AddMemberAsync(libraryId, request.UserId, request.Role);
 
         if (result == MemberAdditionResult.LibraryNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
         if (result == MemberAdditionResult.UserNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "user-not-found");
+            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
         }
 
         if (result == MemberAdditionResult.MemberAlreadyAdded)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "member-already-added");
+            return ApiError(StatusCodes.Status400BadRequest, "USER_ALREADY_ADDED", "This user is already a member of the library.");
         }
 
         if (result == MemberAdditionResult.MemberLimitExceeded)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "member-limit-exceeded");
+            return ApiError(StatusCodes.Status403Forbidden, "MEMBER_LIMIT_EXCEEDED", "This library already has the maximum number of members.");
         }
 
         return NoContent();
@@ -275,29 +258,29 @@ public sealed class LibrariesController : ControllerBase
 
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageMembersAsync(libraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageMembersAsync(libraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage users in this library.");
         }
 
         var result = await _membershipManager.ChangeMemberRoleAsync(libraryId, userId, request.NewRole);
 
         if (result == MemberRoleChangeResult.LibraryNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
         if (result == MemberRoleChangeResult.UserNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "user-not-found");
+            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with the this identifier.");
         }
 
         if (result == MemberRoleChangeResult.UserNotMember)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "user-not-member");
+            return ApiError(StatusCodes.Status400BadRequest, "USER_NOT_MEMBER", "This user is not a member of the library.");
         }
 
         return NoContent();
@@ -314,29 +297,29 @@ public sealed class LibrariesController : ControllerBase
     {
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageMembersAsync(libraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageMembersAsync(libraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status404NotFound, "ACCESS_DENIED", "You are not allowed to manage users in this library.");
         }
 
         var result = await _membershipManager.RemoveMemberAsync(libraryId, userId);
 
         if (result == MemberRemovalResult.LibraryNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
         }
 
         if (result == MemberRemovalResult.UserNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "user-not-found");
+            return LibraryNotFoundError();
         }
 
         if (result == MemberRemovalResult.UserNotMember)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "user-not-member");
+            return ApiError(StatusCodes.Status400BadRequest, "USER_NOT_MEMBER", "This user is not a member of the library.");
         }
 
         return NoContent();
@@ -352,12 +335,12 @@ public sealed class LibrariesController : ControllerBase
     {
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
-        if (!await _permissionManager.CanViewLibraryAsync(libraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(libraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of this library.");
         }
 
         var overviews = _accountManager.Accounts
@@ -386,15 +369,20 @@ public sealed class LibrariesController : ControllerBase
         var library = await _libraryManager.FindByIdAsync(libraryId);
         if (library == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return LibraryNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageLibrary(libraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageLibrary(libraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage this library.");
         }
 
         await _libraryManager.DeleteAsync(library);
         return NoContent();
+    }
+
+    private static ObjectResult LibraryNotFoundError()
+    {
+        return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
     }
 }

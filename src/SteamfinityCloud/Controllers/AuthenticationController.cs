@@ -13,23 +13,17 @@ namespace Steamfinity.Cloud.Controllers;
 
 [ApiController]
 [Route("api/authentication")]
-public sealed class AuthenticationController : ControllerBase
+public sealed class AuthenticationController : SteamfinityController
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IConfiguration _configuration;
-    private readonly ILogger _logger;
 
-    public AuthenticationController(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        IConfiguration configuration,
-        ILogger<AuthenticationController> logger)
+    public AuthenticationController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpPost("sign-up")]
@@ -48,14 +42,12 @@ public sealed class AuthenticationController : ControllerBase
             var correctAdministratorSignUpKey = _configuration["Authentication:AdministratorSignUpKey"];
             if (string.IsNullOrWhiteSpace(correctAdministratorSignUpKey))
             {
-                _logger.LogInformation("The user '{userName}' has attempted to sign up as an administrator, but the administrator sign-up key is not configured.", request.UserName);
-                return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "administrator-sign-up-key-not-configured");
+                return ApiError(StatusCodes.Status401Unauthorized, "ADMIN_KEY_DISABLED", "The administrator sign-up key has not been configured in the server settings.");
             }
 
             if (request.AdministratorSignUpKey != correctAdministratorSignUpKey)
             {
-                _logger.LogInformation("The user '{userName}' has attempted to sign up as an administrator but provided an incorrect administrator sign-up key.", request.UserName);
-                return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "incorrect-administrator-sign-up-key");
+                return ApiError(StatusCodes.Status401Unauthorized, "INCORECT_ADMIN_KEY", "The provided administrator sign-up key is incorrect.");
             }
 
             addToAdministratorRole = true;
@@ -73,28 +65,22 @@ public sealed class AuthenticationController : ControllerBase
 
             if (errorCode == "DuplicateUserName")
             {
-                _logger.LogInformation("A user has attempted to sign up with a username that already exists: '{userName}'.", request.UserName);
-                return Problem(statusCode: StatusCodes.Status409Conflict, detail: "duplicate-user-name");
+                return ApiError(StatusCodes.Status409Conflict, "DUPLICATE_USERNAME", "There is already a user with this username.");
             }
 
             if (errorCode == "InvalidUserName")
             {
-                _logger.LogInformation("A user has attempted to sign up with an invalid username: '{userName}'.", request.UserName);
-                return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "invalid-user-name");
+                return ApiError(StatusCodes.Status400BadRequest, "INVALID_USERNAME", "The provided username is too short, too long, or contains illegal characters.");
             }
 
             if (errorCode is "PasswordTooShort" or "PasswordRequiresLower" or "PasswordRequiresUpper" or
                 "PasswordRequiresDigit" or "PasswordRequiresNonAlphanumeric" or "PasswordRequiresUniqueChars")
             {
-                _logger.LogInformation("The user '{userName}' has attempted to sign up with a password that is too weak.", request.UserName);
-                return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "password-too-weak");
+                return ApiError(StatusCodes.Status400BadRequest, "PASSWORD_TOO_WEAK", "The provided password is too weak.");
             }
 
-            _logger.LogError("An identity error has occurred while attempting to create user '{userName}': '{errorCode}'.", request.UserName, errorCode);
             throw new IdentityException(errorCode);
         }
-
-        _logger.LogInformation("The user '{userId}' has been successfully created with username '{userName}.", user.Id, user.UserName);
 
         await AddUserToRoleAsync(user, RoleNames.User);
         if (addToAdministratorRole)
@@ -102,7 +88,6 @@ public sealed class AuthenticationController : ControllerBase
             await AddUserToRoleAsync(user, RoleNames.Administrator);
         }
 
-        _logger.LogInformation("The user '{userId}' has successfully signed up with username '{userName}'.", user.Id, user.UserName);
         return NoContent();
     }
 
@@ -118,34 +103,29 @@ public sealed class AuthenticationController : ControllerBase
         var user = await _userManager.FindByNameAsync(request.UserName);
         if (user == null)
         {
-            _logger.LogInformation("A non-existent user '{userName}' has attempted to sign in.", request.UserName);
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "incorrect-credentials");
+            return ApiError(StatusCodes.Status401Unauthorized, "INVALID_CREDENTIALS", "The provided username and password do not match.");
         }
 
         var signInResult = await _signInManager.CheckPasswordSignInAsync(user, request.Password, true);
 
         if (signInResult.IsLockedOut)
         {
-            _logger.LogInformation("A locked-out user '{userId} has attempted to sign in.", request.UserName);
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "user-locked-out");
+            return ApiError(StatusCodes.Status401Unauthorized, "LOCKED_OUT", "This user account has been temporarily blocked due to multiple failed sign-in attempts.");
         }
 
         if (signInResult.IsNotAllowed)
         {
-            _logger.LogInformation("The sign-in attempt of user '{userId}' has been blocked due to incomplete account configuration.", user.Id);
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "sign-in-not-allowed");
+            return ApiError(StatusCodes.Status401Unauthorized, "NOT_ALLOWED", "You are currently not allowed to sign in.");
         }
 
         if (!signInResult.Succeeded)
         {
-            _logger.LogInformation("The user '{userId}' has attempted to sign in but provided an incorrect password.", user.Id);
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "incorrect-credentials");
+            return ApiError(StatusCodes.Status401Unauthorized, "INVALID_CREDENTIALS", "The provided username and password do not match.");
         }
 
         if (user.IsSuspended)
         {
-            _logger.LogInformation("A suspended user '{userId} has attempted to sign in.", request.UserName);
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "user-suspended");
+            return ApiError(StatusCodes.Status401Unauthorized, "USER_SUSPENDED", "This user account has been suspended.");
         }
 
         user.LastSignInTime = DateTimeOffset.UtcNow;
@@ -160,7 +140,6 @@ public sealed class AuthenticationController : ControllerBase
             RefreshToken = refreshToken
         };
 
-        _logger.LogInformation("The user '{userId}' has successfully signed in.", user.Id);
         return Ok(tokenDetails);
     }
 
@@ -176,14 +155,12 @@ public sealed class AuthenticationController : ControllerBase
         var user = await _userManager.FindByIdAsync(request.UserId.ToString());
         if (user == null)
         {
-            _logger.LogInformation("A non-existent user '{userId}' has attempted to refresh their authentication token.", request.UserId);
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "invalid-token");
+            return ApiError(StatusCodes.Status401Unauthorized, "INVALID_TOKEN", "The provided authentication token is invalid.");
         }
 
         if (!await _userManager.VerifyUserTokenAsync(user, "Default", "RefreshToken", request.RefreshToken))
         {
-            _logger.LogInformation("The user '{userId}' has attempted to refresh their authentication token but provided an incorrect refresh token.", user.Id);
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "invalid-token");
+            return ApiError(StatusCodes.Status401Unauthorized, "INVALID_TOKEN", "The provided authentication token is invalid.");
         }
 
         var claims = new List<Claim>
@@ -203,7 +180,6 @@ public sealed class AuthenticationController : ControllerBase
             Roles = roles
         };
 
-        _logger.LogInformation("The user '{userId}' has successfully refreshed their authentication token.", user.Id);
         return Ok(tokenDetails);
     }
 
@@ -213,12 +189,8 @@ public sealed class AuthenticationController : ControllerBase
         if (!userAdditionResult.Succeeded)
         {
             var errorCode = userAdditionResult.Errors.First().Code;
-
-            _logger.LogError("An identity error has occurred while attempting to add user '{userId}' to the '{roleName}' role: '{errorCode}'.", user.Id, roleName, errorCode);
             throw new IdentityException(errorCode);
         }
-
-        _logger.LogInformation("The user '{userId}' has been successfully added to the '{roleName}' role.", user.Id, roleName);
     }
 
     private string CreateJwtBearerAuthenticationToken(IEnumerable<Claim> claims, TimeSpan lifetime)
@@ -226,7 +198,6 @@ public sealed class AuthenticationController : ControllerBase
         var issuerSigningKey = _configuration["Authentication:Schemes:Bearer:IssuerSigningKey"];
         if (string.IsNullOrWhiteSpace(issuerSigningKey))
         {
-            _logger.LogError("The JWT bearer authentication issuer signing key is not configured in the app settings.");
             throw new ConfigurationMissingException("Authentication:Schemes:Bearer:IssuerSigningKey");
         }
 

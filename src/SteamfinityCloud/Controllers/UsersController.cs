@@ -6,36 +6,19 @@ using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Models;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 
 namespace Steamfinity.Cloud.Controllers;
 
 [ApiController]
 [Route("api/users")]
 [Authorize(PolicyNames.Users)]
-public sealed class UsersController : ControllerBase
+public sealed class UsersController : SteamfinityController
 {
     private readonly UserManager<ApplicationUser> _userManager;
 
     public UsersController(UserManager<ApplicationUser> userManager)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-    }
-
-    private Guid CurrentUserId
-    {
-        get
-        {
-            var nameIdentifier = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("The user authentication token is missing the NameIdentifier claim.");
-
-            if (!Guid.TryParse(nameIdentifier, out var userId))
-            {
-                throw new InvalidOperationException("The user authentication token NameIdentifier claim is not a valid GUID.");
-            }
-
-            return userId;
-        }
     }
 
     [HttpGet("search/{userName}")]
@@ -50,7 +33,7 @@ public sealed class UsersController : ControllerBase
         var user = await _userManager.FindByNameAsync(userName);
         if (user == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "user-not-found");
+            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this username.");
         }
 
         var result = new UserSearchResult
@@ -66,6 +49,7 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ChangeUserNameAsync(Guid userId, UserNameChangeRequest request)
@@ -75,12 +59,12 @@ public sealed class UsersController : ControllerBase
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "user-not-found");
+            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
         }
 
-        if (userId != CurrentUserId && !IsCurrentUserAdministrator())
+        if (userId != UserId && !IsAdministrator)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to change other user's name.");
         }
 
         var result = await _userManager.SetUserNameAsync(user, request.NewUserName);
@@ -90,12 +74,12 @@ public sealed class UsersController : ControllerBase
 
             if (errorCode == "DuplicateUserName")
             {
-                return Problem(statusCode: StatusCodes.Status409Conflict, detail: "duplicate-user-name");
+                return ApiError(StatusCodes.Status409Conflict, "DUPLICATE_USERNAME", "There is already a user with this username.");
             }
 
             if (errorCode == "InvalidUserName")
             {
-                return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "invalid-user-name");
+                return ApiError(StatusCodes.Status400BadRequest, "INVALID_USERNAME", "The username is too short, too long, or contains illegal characters.");
             }
 
             throw new IdentityException(errorCode);
@@ -109,6 +93,7 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ChangePasswordAsync(Guid userId, PasswordChangeRequest request)
     {
@@ -117,28 +102,43 @@ public sealed class UsersController : ControllerBase
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "user-not-found");
+            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
         }
 
-        if (userId != CurrentUserId && !IsCurrentUserAdministrator())
+        if (userId != UserId && !IsAdministrator)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to change other users' passwords.");
         }
 
-        var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        IdentityResult result;
+        if (IsAdministrator)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
+        }
+        else
+        {
+            if (request.CurrentPassword == null)
+            {
+                return ApiError(StatusCodes.Status401Unauthorized, "INCORRECT_PASSWORD", "The current password must be provided.");
+            }
+
+            result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        }
+
         if (!result.Succeeded)
         {
             var errorCode = result.Errors.First().Code;
 
             if (errorCode == "PasswordMismatch")
             {
-                return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "incorrect-password");
+                return ApiError(StatusCodes.Status401Unauthorized, "INCORRECT_PASSWORD", "The current password is incorrect.");
             }
 
             if (errorCode is "PasswordTooShort" or "PasswordRequiresLower" or "PasswordRequiresUpper" or
                "PasswordRequiresDigit" or "PasswordRequiresNonAlphanumeric" or "PasswordRequiresUniqueChars")
             {
-                return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "password-too-weak");
+                return ApiError(StatusCodes.Status400BadRequest, "PASSWORD_TOO_WEAK", "The new password is too weak.");
             }
 
             throw new IdentityException(errorCode);
@@ -151,6 +151,8 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> DeleteUserAsync(Guid userId, UserDeletionRequest request)
     {
@@ -159,17 +161,17 @@ public sealed class UsersController : ControllerBase
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "user-not-found");
+            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
         }
 
-        if (userId != CurrentUserId && !IsCurrentUserAdministrator())
+        if (userId != UserId && !IsAdministrator)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to delete other users.");
         }
 
-        if (!await _userManager.CheckPasswordAsync(user, request.Password))
+        if (!IsAdministrator && !await _userManager.CheckPasswordAsync(user, request.Password))
         {
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "incorrect-password");
+            return ApiError(StatusCodes.Status401Unauthorized, "INCORRECT_PASSWORD", "The provided password is incorrect.");
         }
 
         var result = await _userManager.DeleteAsync(user);
@@ -180,10 +182,5 @@ public sealed class UsersController : ControllerBase
         }
 
         return NoContent();
-    }
-
-    private bool IsCurrentUserAdministrator()
-    {
-        return User.HasClaim(ClaimTypes.Role, RoleNames.Administrator);
     }
 }

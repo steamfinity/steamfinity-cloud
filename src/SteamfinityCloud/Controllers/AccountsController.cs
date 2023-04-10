@@ -6,14 +6,13 @@ using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
-using System.Security.Claims;
 
 namespace Steamfinity.Cloud.Controllers;
 
 [ApiController]
 [Route("api/accounts")]
 [Authorize(PolicyNames.Users)]
-public sealed class AccountsController : ControllerBase
+public sealed class AccountsController : SteamfinityController
 {
     private readonly ILibraryManager _libraryManager;
     private readonly IMembershipManager _membershipManager;
@@ -36,22 +35,6 @@ public sealed class AccountsController : ControllerBase
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
         _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
-    }
-
-    private Guid UserId
-    {
-        get
-        {
-            var nameIdentifier = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("The user authentication token is missing the NameIdentifier claim.");
-
-            if (!Guid.TryParse(nameIdentifier, out var userId))
-            {
-                throw new InvalidOperationException("The user authentication token NameIdentifier claim is not a valid GUID.");
-            }
-
-            return userId;
-        }
     }
 
     [HttpGet("favorite")]
@@ -97,12 +80,12 @@ public sealed class AccountsController : ControllerBase
 
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanViewLibraryAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of the library that holds the account.");
         }
 
         var details = new AccountDetails
@@ -156,18 +139,18 @@ public sealed class AccountsController : ControllerBase
 
         if (!await _libraryManager.ExistsAsync(request.LibraryId))
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(request.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(request.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         var steamId = await _steamApi.TryResolveSteamIdAsync(request.SteamId);
         if (steamId == null)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "invalid-steam-id");
+            return ApiError(StatusCodes.Status400BadRequest, "INVALID_STEAMID", "The provided STEAM ID is invalid.");
         }
 
         var account = new Account
@@ -180,17 +163,17 @@ public sealed class AccountsController : ControllerBase
 
         if (result == AccountAdditionResult.LibraryNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "library-not-found");
+            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
         }
 
         if (result == AccountAdditionResult.LibrarySizeExceeded)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "library-size-exceeded");
+            return ApiError(StatusCodes.Status403Forbidden, "LIBRARY_SIZE_EXCEEDED", "This library already has the maximum number of accounts.");
         }
 
         if (result == AccountAdditionResult.InvalidSteamId)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "invalid-steam-id");
+            return ApiError(StatusCodes.Status400BadRequest, "INVALID_STEAMID", "The provided STEAM ID is invalid.");
         }
 
         return NoContent();
@@ -209,12 +192,12 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         account.AccountName = request.NewAccountName;
@@ -238,12 +221,12 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         account.Password = request.NewPassword;
@@ -267,12 +250,12 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         account.Alias = request.NewAlias;
@@ -296,19 +279,19 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
         var result = await _accountInteractionManager.SetIsFavoriteAsync(account.Id, UserId, request.NewIsFavorite);
 
         if (result == AccountIsFavoriteSetResult.AccountNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
         if (result == AccountIsFavoriteSetResult.UserNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "user-not-found");
+            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
         }
 
         return NoContent();
@@ -327,12 +310,12 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         account.Color = request.NewColor;
@@ -356,12 +339,12 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         account.HasPrimeStatus = request.NewHasPrimeStatus;
@@ -385,12 +368,12 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         account.SkillGroup = request.NewSkillGroup;
@@ -414,12 +397,12 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         account.LaunchParameters = request.NewLaunchParameters;
@@ -443,12 +426,12 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         account.Notes = request.NewNotes;
@@ -473,29 +456,29 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage accounts in this library.");
         }
 
         var result = await _accountManager.SetHashtagsAsync(account, request.NewHashtags);
 
         if (result == HashtagsSetResult.AccountNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
         if (result == HashtagsSetResult.HashtagLimitExceeded)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "hashtag-limit-exceeded");
+            return ApiError(StatusCodes.Status403Forbidden, "HASHTAG_LIMIT_EXCEEDED", "You are not allowed to add this number of hashtags.");
         }
 
         if (result == HashtagsSetResult.InvalidHashtags)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "invalid-hashtags");
+            return ApiError(StatusCodes.Status400BadRequest, "INVALID_HASHTAGS", "At least one of the provided hashtags is invalid.");
         }
 
         account.LastEditTime = DateTimeOffset.UtcNow;
@@ -517,25 +500,25 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
         // Ensure the user has permission to manage accounts in the current library:
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to transfer accounts from this library.");
         }
 
         // Ensure the user has permission to manage accounts in the new library:
-        if (!await _permissionManager.CanManageAccountsAsync(request.NewLibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(request.NewLibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to transfer accounts to this library.");
         }
 
         // Prevent the account from being moved to the same library it is currently in:
         if (account.LibraryId == request.NewLibraryId)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "already-transfered");
+            return ApiError(StatusCodes.Status400BadRequest, "INVALID_OPERATION", "You cannot transfer an account to the same library that it is currently in.");
         }
 
         account.LibraryId = request.NewLibraryId;
@@ -558,15 +541,25 @@ public sealed class AccountsController : ControllerBase
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
+            return AccountNotFoundError();
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return NoAccountManagementPermissionsError();
         }
 
         await _accountManager.DeleteAsync(account);
         return NoContent();
+    }
+
+    private static ObjectResult AccountNotFoundError()
+    {
+        return ApiError(StatusCodes.Status404NotFound, "ACCOUNT_NOT_FOUND", "There is no account with this identifier.");
+    }
+
+    private static ObjectResult NoAccountManagementPermissionsError()
+    {
+        return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage accounts in this library.");
     }
 }
