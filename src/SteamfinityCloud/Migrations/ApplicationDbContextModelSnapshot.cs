@@ -219,6 +219,9 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<string>("OptimizedProfileName")
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<string>("OptimizedProfileUrl")
+                        .HasColumnType("NVARCHAR2(2000)");
+
                     b.Property<string>("OptimizedRealName")
                         .HasColumnType("NVARCHAR2(2000)");
 

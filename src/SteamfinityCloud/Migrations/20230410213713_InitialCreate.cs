@@ -192,6 +192,7 @@ namespace Steamfinity.Cloud.Migrations
                     OptimizedRealName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     AvatarUrl = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     ProfileUrl = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    OptimizedProfileUrl = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     IsProfileSetUp = table.Column<bool>(type: "NUMBER(1)", nullable: true),
                     IsProfileVisible = table.Column<bool>(type: "NUMBER(1)", nullable: true),
                     IsCommentingAllowed = table.Column<bool>(type: "NUMBER(1)", nullable: true),

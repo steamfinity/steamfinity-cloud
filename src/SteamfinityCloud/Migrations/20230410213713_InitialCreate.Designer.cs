@@ -12,7 +12,7 @@ using Steamfinity.Cloud;
 namespace Steamfinity.Cloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230410194530_InitialCreate")]
+    [Migration("20230410213713_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -220,6 +220,9 @@ namespace Steamfinity.Cloud.Migrations
                         .HasColumnType("NVARCHAR2(2000)");
 
                     b.Property<string>("OptimizedProfileName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("OptimizedProfileUrl")
                         .HasColumnType("NVARCHAR2(2000)");
 
                     b.Property<string>("OptimizedRealName")
