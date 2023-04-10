@@ -16,15 +16,23 @@ public sealed class Account
 
     public string? AccountName { get; set; }
 
+    public string? OptimizedAccountName { get; set; }
+
     public string? Password { get; set; }
 
     public string? Alias { get; set; }
+
+    public string? OptimizedAlias { get; set; }
 
     public SimpleColor Color { get; set; }
 
     public string? ProfileName { get; set; }
 
+    public string? OptimizedProfileName { get; set; }
+
     public string? RealName { get; set; }
+
+    public string? OptimizedRealName { get; set; }
 
     public string? AvatarUrl { get; set; }
 
@@ -41,6 +49,8 @@ public sealed class Account
     public ulong? CurrentGameId { get; set; }
 
     public string? CurrentGameName { get; set; }
+
+    public string? OptimizedCurrentGameName { get; set; }
 
     public bool HasPrimeStatus { get; set; }
 
@@ -68,7 +78,11 @@ public sealed class Account
 
     public string? LaunchParameters { get; set; }
 
+    public string? OptimizedLaunchParameters { get; set; }
+
     public string? Notes { get; set; }
+
+    public string? OptimizedNotes { get; set; }
 
     public ICollection<Hashtag> Hashtags { get; } = null!;
 

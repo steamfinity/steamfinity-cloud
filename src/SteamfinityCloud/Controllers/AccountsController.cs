@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
+using Steamfinity.Cloud.Extensions;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
 
@@ -201,6 +202,7 @@ public sealed class AccountsController : SteamfinityController
         }
 
         account.AccountName = request.NewAccountName;
+        account.OptimizedAccountName = request.NewAccountName?.OptimizeForSearch();
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
@@ -259,6 +261,7 @@ public sealed class AccountsController : SteamfinityController
         }
 
         account.Alias = request.NewAlias;
+        account.OptimizedAlias = request.NewAlias?.OptimizeForSearch();
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
@@ -406,6 +409,7 @@ public sealed class AccountsController : SteamfinityController
         }
 
         account.LaunchParameters = request.NewLaunchParameters;
+        account.OptimizedLaunchParameters = request.NewLaunchParameters?.OptimizeForSearch();
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
@@ -435,6 +439,7 @@ public sealed class AccountsController : SteamfinityController
         }
 
         account.Notes = request.NewNotes;
+        account.OptimizedNotes = request.NewNotes?.OptimizeForSearch();
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
 using Steamfinity.Cloud.Exceptions;
+using Steamfinity.Cloud.Extensions;
 using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
@@ -266,6 +267,7 @@ public sealed partial class SteamApi : ISteamApi
         if (playerElement.TryGetProperty("personaname", out var profileNameElement))
         {
             account.ProfileName = profileNameElement.GetString();
+            account.OptimizedProfileName = account.ProfileName?.OptimizeForSearch();
         }
         else
         {
@@ -275,6 +277,7 @@ public sealed partial class SteamApi : ISteamApi
         if (playerElement.TryGetProperty("realname", out var realNameElement))
         {
             account.RealName = realNameElement.GetString();
+            account.OptimizedRealName = account.RealName?.OptimizeForSearch();
         }
         else
         {
@@ -343,6 +346,7 @@ public sealed partial class SteamApi : ISteamApi
         if (playerElement.TryGetProperty("gameextrainfo", out var currentGameNameElement))
         {
             account.CurrentGameName = currentGameNameElement.GetString();
+            account.OptimizedCurrentGameName = account.CurrentGameName?.OptimizeForSearch();
         }
         else
         {
