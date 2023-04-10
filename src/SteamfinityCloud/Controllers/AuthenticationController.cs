@@ -47,7 +47,7 @@ public sealed class AuthenticationController : SteamfinityController
 
             if (request.AdministratorSignUpKey != correctAdministratorSignUpKey)
             {
-                return ApiError(StatusCodes.Status401Unauthorized, "INCORECT_ADMIN_KEY", "The provided administrator sign-up key is incorrect.");
+                return ApiError(StatusCodes.Status401Unauthorized, "INCORRECT_ADMIN_KEY", "The provided administrator sign-up key is incorrect.");
             }
 
             addToAdministratorRole = true;
