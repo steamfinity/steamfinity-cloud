@@ -38,32 +38,57 @@ public sealed class AccountsController : SteamfinityController
         _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
     }
 
+    [HttpGet("all")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public ActionResult<IAsyncEnumerable<AccountOverview>> GetAllAccounts([FromQuery] AccountQueryOptions options)
+    {
+        var authorizedLibraries = _membershipManager.Memberships
+                                  .AsNoTracking()
+                                  .Where(m => m.UserId == UserId)
+                                  .Select(m => m.LibraryId);
+
+        var accountOverviews = _accountManager.Accounts
+                               .AsNoTracking()
+                               .Where(a => authorizedLibraries.Contains(a.LibraryId))
+                               .ApplyQueryOptions(options)
+                               .Select(a => new AccountOverview
+                               {
+                                   Id = a.Id,
+                                   ProfileName = a.ProfileName,
+                                   AvatarUrl = a.AvatarUrl
+                               })
+                               .AsAsyncEnumerable();
+
+        return Ok(accountOverviews);
+    }
+
     [HttpGet("favorite")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<IAsyncEnumerable<AccountOverview>> GetFavoriteAccounts([FromQuery] AccountQueryOptions options)
     {
-        var libraries = _membershipManager.Memberships
-                        .AsNoTracking()
-                        .Where(m => m.UserId == UserId)
-                        .Select(m => m.LibraryId);
+        var authorizedLibraries = _membershipManager.Memberships
+                                  .AsNoTracking()
+                                  .Where(m => m.UserId == UserId)
+                                  .Select(m => m.LibraryId);
 
-        var accounts = _accountInteractionManager.Interactions
-                       .AsNoTracking()
-                       .Where(i => i.UserId == UserId && i.IsFavorite)
-                       .Include(i => i.Account)
-                       .Select(i => i.Account)
-                       .Where(a => libraries.Contains(a.LibraryId))
-                       .ApplyQueryOptions(options)
-                       .Select(a => new AccountOverview
-                       {
-                           Id = a.Id,
-                           ProfileName = a.ProfileName,
-                           AvatarUrl = a.AvatarUrl
-                       })
-                       .AsAsyncEnumerable();
+        var accountOverviews = _accountInteractionManager.Interactions
+                               .AsNoTracking()
+                               .Where(i => i.UserId == UserId && i.IsFavorite)
+                               .Include(i => i.Account)
+                               .Select(i => i.Account)
+                               .Where(a => authorizedLibraries.Contains(a.LibraryId))
+                               .ApplyQueryOptions(options)
+                               .Select(a => new AccountOverview
+                               {
+                                   Id = a.Id,
+                                   ProfileName = a.ProfileName,
+                                   AvatarUrl = a.AvatarUrl
+                               })
+                               .AsAsyncEnumerable();
 
-        return Ok(accounts);
+        return Ok(accountOverviews);
     }
 
     [HttpGet("{accountId}")]

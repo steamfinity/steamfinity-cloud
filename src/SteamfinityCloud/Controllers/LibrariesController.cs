@@ -344,19 +344,19 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of this library.");
         }
 
-        var overviews = _accountManager.Accounts
-                        .AsNoTracking()
-                        .Where(a => a.LibraryId == libraryId)
-                        .ApplyQueryOptions(options)
-                        .Select(a => new AccountOverview
-                        {
-                            Id = a.Id,
-                            ProfileName = a.ProfileName,
-                            AvatarUrl = a.AvatarUrl
-                        })
-                        .AsAsyncEnumerable();
+        var accountOverviews = _accountManager.Accounts
+                               .AsNoTracking()
+                               .Where(a => a.LibraryId == libraryId)
+                               .ApplyQueryOptions(options)
+                               .Select(a => new AccountOverview
+                               {
+                                   Id = a.Id,
+                                   ProfileName = a.ProfileName,
+                                   AvatarUrl = a.AvatarUrl
+                               })
+                                .AsAsyncEnumerable();
 
-        return Ok(overviews);
+        return Ok(accountOverviews);
     }
 
     [HttpDelete("{libraryId}")]
