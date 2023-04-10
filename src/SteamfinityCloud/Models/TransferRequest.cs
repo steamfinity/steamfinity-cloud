@@ -2,7 +2,7 @@
 
 namespace Steamfinity.Cloud.Models;
 
-public sealed record AccountTransferRequest
+public sealed record TransferRequest
 {
     [Required]
     public Guid NewLibraryId { get; init; }

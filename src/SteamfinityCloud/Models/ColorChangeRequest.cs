@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Steamfinity.Cloud.Models;
 
-public sealed record AccountColorChangeRequest
+public sealed record ColorChangeRequest
 {
     [Required]
     public required SimpleColor NewColor { get; init; }

@@ -2,7 +2,7 @@
 
 namespace Steamfinity.Cloud.Models;
 
-public sealed record AccountIsFavoriteChangeRequest
+public sealed record IsFavoriteChangeRequest
 {
     [Required]
     public required bool NewIsFavorite { get; init; }

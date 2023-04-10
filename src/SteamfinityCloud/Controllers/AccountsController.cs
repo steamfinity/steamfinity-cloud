@@ -260,7 +260,7 @@ public sealed class AccountsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ChangeAliasAsync(Guid accountId, AccountAliasChangeRequest request)
+    public async Task<IActionResult> ChangeAliasAsync(Guid accountId, AliasChangeRequest request)
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -289,7 +289,7 @@ public sealed class AccountsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ChangeIsFavoriteAsync(Guid accountId, AccountIsFavoriteChangeRequest request)
+    public async Task<IActionResult> ChangeIsFavoriteAsync(Guid accountId, IsFavoriteChangeRequest request)
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -320,7 +320,7 @@ public sealed class AccountsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ChangeColorAsync(Guid accountId, AccountColorChangeRequest request)
+    public async Task<IActionResult> ChangeColorAsync(Guid accountId, ColorChangeRequest request)
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -349,7 +349,7 @@ public sealed class AccountsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ChangeHasPrimeStatusAsync(Guid accountId, AccountHasPrimeStatusChangeRequest request)
+    public async Task<IActionResult> ChangeHasPrimeStatusAsync(Guid accountId, HasPrimeStatusChangeRequest request)
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -436,7 +436,7 @@ public sealed class AccountsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ChangeNotesAsync(Guid accountId, AccountNotesChangeRequest request)
+    public async Task<IActionResult> ChangeNotesAsync(Guid accountId, NotesChangeRequest request)
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -466,7 +466,7 @@ public sealed class AccountsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> SetHashtagsAsync(Guid accountId, AccountHashtagsSetRequest request)
+    public async Task<IActionResult> SetHashtagsAsync(Guid accountId, HashtagsSetRequest request)
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -510,7 +510,7 @@ public sealed class AccountsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> TransferAccountAsync(Guid accountId, AccountTransferRequest request)
+    public async Task<IActionResult> TransferAccountAsync(Guid accountId, TransferRequest request)
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
