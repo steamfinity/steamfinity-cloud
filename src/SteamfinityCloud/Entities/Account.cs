@@ -38,6 +38,8 @@ public sealed class Account
 
     public string? ProfileUrl { get; set; }
 
+    public string? OptimizedProfileUrl { get; set; }
+
     public bool? IsProfileSetUp { get; set; }
 
     public bool? IsProfileVisible { get; set; }

@@ -296,6 +296,7 @@ public sealed partial class SteamApi : ISteamApi
         if (playerElement.TryGetProperty("profileurl", out var profileUrlProperty))
         {
             account.ProfileUrl = profileUrlProperty.GetString();
+            account.OptimizedProfileUrl = account.ProfileUrl?.OptimizeForSearch();
         }
         else
         {
