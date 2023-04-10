@@ -141,7 +141,7 @@ public sealed class AccountsController : SteamfinityController
 
         if (!await _libraryManager.ExistsAsync(request.LibraryId))
         {
-            return AccountNotFoundError();
+            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(request.LibraryId, UserId))

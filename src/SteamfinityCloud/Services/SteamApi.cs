@@ -1,10 +1,10 @@
 ﻿using AnyAscii;
 using Microsoft.EntityFrameworkCore;
+using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
 using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Extensions;
-using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -13,8 +13,6 @@ namespace Steamfinity.Cloud.Services;
 
 public sealed partial class SteamApi : ISteamApi
 {
-    private const ulong SteamId64Base = 76561197960265728;
-
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly string _steamApiKey;
@@ -37,7 +35,7 @@ public sealed partial class SteamApi : ISteamApi
         var steamId2Match = SteamId2Regex().Match(input);
         if (steamId2Match.Success)
         {
-            var steamId = SteamId64Base + (ulong.Parse(steamId2Match.Value[4..]) * 2) + 1;
+            var steamId = OtherConstants.SteamId64Base + (ulong.Parse(steamId2Match.Value[4..]) * 2) + 1;
             if (await VerifySteamIdAsync(steamId))
             {
                 return steamId;
@@ -50,7 +48,7 @@ public sealed partial class SteamApi : ISteamApi
         var steamId3Match = SteamId3Regex().Match(input);
         if (steamId3Match.Success)
         {
-            var steamId = SteamId64Base + ulong.Parse(steamId3Match.Value[4..]);
+            var steamId = OtherConstants.SteamId64Base + ulong.Parse(steamId3Match.Value[4..]);
             if (await VerifySteamIdAsync(steamId))
             {
                 return steamId;
@@ -108,13 +106,13 @@ public sealed partial class SteamApi : ISteamApi
         var numberMatch = NumberRegex().Match(filteredInput);
         if (numberMatch.Success && ulong.TryParse(numberMatch.Value, out var number))
         {
-            var steamIdFromSteamid3 = SteamId64Base + number;
+            var steamIdFromSteamid3 = OtherConstants.SteamId64Base + number;
             if (await VerifySteamIdAsync(steamIdFromSteamid3))
             {
                 return steamIdFromSteamid3;
             }
 
-            var steamIdFromSteamId2 = SteamId64Base + (number * 2) + 1;
+            var steamIdFromSteamId2 = OtherConstants.SteamId64Base + (number * 2) + 1;
             if (await VerifySteamIdAsync(steamIdFromSteamId2))
             {
                 return steamIdFromSteamId2;
