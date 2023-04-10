@@ -181,11 +181,15 @@ namespace Steamfinity.Cloud.Migrations
                     LibraryId = table.Column<Guid>(type: "RAW(16)", nullable: false),
                     SteamId = table.Column<decimal>(type: "NUMBER(20)", nullable: false),
                     AccountName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    OptimizedAccountName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     Password = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     Alias = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    OptimizedAlias = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     Color = table.Column<string>(type: "NVARCHAR2(2000)", nullable: false),
                     ProfileName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    OptimizedProfileName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     RealName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    OptimizedRealName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     AvatarUrl = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     ProfileUrl = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     IsProfileSetUp = table.Column<bool>(type: "NUMBER(1)", nullable: true),
@@ -194,6 +198,7 @@ namespace Steamfinity.Cloud.Migrations
                     Status = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     CurrentGameId = table.Column<decimal>(type: "NUMBER(20)", nullable: true),
                     CurrentGameName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    OptimizedCurrentGameName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     HasPrimeStatus = table.Column<bool>(type: "NUMBER(1)", nullable: false),
                     SkillGroup = table.Column<int>(type: "NUMBER(10)", nullable: false),
                     IsCommunityBanned = table.Column<bool>(type: "NUMBER(1)", nullable: true),
@@ -207,7 +212,9 @@ namespace Steamfinity.Cloud.Migrations
                     CreationTime = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: true),
                     LastSignOutTime = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: true),
                     LaunchParameters = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
-                    Notes = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true)
+                    OptimizedLaunchParameters = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    Notes = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    OptimizedNotes = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true)
                 },
                 constraints: table =>
                 {

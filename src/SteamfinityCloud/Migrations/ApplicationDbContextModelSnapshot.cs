@@ -201,6 +201,27 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<int?>("NumberOfVACBans")
                         .HasColumnType("NUMBER(10)");
 
+                    b.Property<string>("OptimizedAccountName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("OptimizedAlias")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("OptimizedCurrentGameName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("OptimizedLaunchParameters")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("OptimizedNotes")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("OptimizedProfileName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("OptimizedRealName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
                     b.Property<string>("Password")
                         .HasColumnType("NVARCHAR2(2000)");
 
