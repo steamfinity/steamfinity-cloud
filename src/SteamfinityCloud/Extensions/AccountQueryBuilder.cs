@@ -58,6 +58,7 @@ public static class AccountQueryBuilder
             (a.OptimizedAlias != null && a.OptimizedAlias.Contains(optimizedSearch)) ||
             (a.OptimizedProfileName != null && a.OptimizedProfileName.Contains(optimizedSearch)) ||
             (a.OptimizedRealName != null && a.OptimizedRealName.Contains(optimizedSearch)) ||
+            (a.OptimizedProfileUrl != null && a.OptimizedProfileUrl.Contains(optimizedSearch)) ||
             (a.OptimizedCurrentGameName != null && a.OptimizedCurrentGameName.Contains(optimizedSearch)) ||
             (a.OptimizedLaunchParameters != null && a.OptimizedLaunchParameters.Contains(optimizedSearch)) ||
             (a.OptimizedNotes != null && a.OptimizedNotes.Contains(optimizedSearch)));
