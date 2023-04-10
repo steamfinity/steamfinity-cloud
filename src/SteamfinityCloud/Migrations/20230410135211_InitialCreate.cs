@@ -183,7 +183,6 @@ namespace Steamfinity.Cloud.Migrations
                     AccountName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     Password = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     Alias = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
-                    IsFavorite = table.Column<bool>(type: "NUMBER(1)", nullable: false),
                     Color = table.Column<string>(type: "NVARCHAR2(2000)", nullable: false),
                     ProfileName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
                     RealName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
@@ -247,6 +246,31 @@ namespace Steamfinity.Cloud.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AccountInteractions",
+                columns: table => new
+                {
+                    AccountId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    UserId = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    IsFavorite = table.Column<bool>(type: "NUMBER(1)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccountInteractions", x => new { x.AccountId, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_AccountInteractions_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AccountInteractions_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Hashtags",
                 columns: table => new
                 {
@@ -263,6 +287,11 @@ namespace Steamfinity.Cloud.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccountInteractions_UserId",
+                table: "AccountInteractions",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_LibraryId",
@@ -327,6 +356,9 @@ namespace Steamfinity.Cloud.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AccountInteractions");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 

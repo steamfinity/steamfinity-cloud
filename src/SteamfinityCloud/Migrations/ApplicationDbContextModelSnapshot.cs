@@ -168,9 +168,6 @@ namespace Steamfinity.Cloud.Migrations
                     b.Property<bool?>("IsCommunityBanned")
                         .HasColumnType("NUMBER(1)");
 
-                    b.Property<bool>("IsFavorite")
-                        .HasColumnType("NUMBER(1)");
-
                     b.Property<bool?>("IsProfileSetUp")
                         .HasColumnType("NUMBER(1)");
 
@@ -232,6 +229,24 @@ namespace Steamfinity.Cloud.Migrations
                     b.HasIndex("SteamId");
 
                     b.ToTable("Accounts");
+                });
+
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.AccountInteraction", b =>
+                {
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("NUMBER(1)");
+
+                    b.HasKey("AccountId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AccountInteractions");
                 });
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.ApplicationRole", b =>
@@ -453,13 +468,34 @@ namespace Steamfinity.Cloud.Migrations
                     b.Navigation("Library");
                 });
 
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.AccountInteraction", b =>
+                {
+                    b.HasOne("Steamfinity.Cloud.Entities.Account", "Account")
+                        .WithMany("Interactions")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Steamfinity.Cloud.Entities.ApplicationUser", "User")
+                        .WithMany("AccountInteractions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Hashtag", b =>
                 {
-                    b.HasOne("Steamfinity.Cloud.Entities.Account", null)
+                    b.HasOne("Steamfinity.Cloud.Entities.Account", "Account")
                         .WithMany("Hashtags")
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Membership", b =>
@@ -484,10 +520,14 @@ namespace Steamfinity.Cloud.Migrations
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Account", b =>
                 {
                     b.Navigation("Hashtags");
+
+                    b.Navigation("Interactions");
                 });
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.ApplicationUser", b =>
                 {
+                    b.Navigation("AccountInteractions");
+
                     b.Navigation("Memberships");
                 });
 
