@@ -2,6 +2,7 @@
 using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
+using System.Security.Principal;
 
 namespace Steamfinity.Cloud.Services;
 
@@ -25,6 +26,11 @@ public sealed class AccountManager : IAccountManager
     }
 
     public IQueryable<Account> Accounts => _context.Accounts;
+
+    public async Task<bool> ExistsAsync(Guid accountId)
+    {
+        return await _context.Accounts.AnyAsync(a => a.Id == accountId);
+    }
 
     public async Task<Account?> FindByIdAsync(Guid accountId)
     {
@@ -62,7 +68,7 @@ public sealed class AccountManager : IAccountManager
         ArgumentNullException.ThrowIfNull(account, nameof(account));
         ArgumentNullException.ThrowIfNull(hashtags, nameof(hashtags));
 
-        if (!await _context.Accounts.AnyAsync(a => a.Id == account.Id))
+        if (!await ExistsAsync(account.Id))
         {
             return HashtagsSetResult.AccountNotFound;
         }

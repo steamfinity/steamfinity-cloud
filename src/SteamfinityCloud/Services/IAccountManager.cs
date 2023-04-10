@@ -7,6 +7,8 @@ public interface IAccountManager
 {
     IQueryable<Account> Accounts { get; }
 
+    Task<bool> ExistsAsync(Guid accountId);
+
     Task<Account?> FindByIdAsync(Guid accountId);
 
     Task<AccountAdditionResult> AddAsync(Account account);

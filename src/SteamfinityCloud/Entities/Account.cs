@@ -20,8 +20,6 @@ public sealed class Account
 
     public string? Alias { get; set; }
 
-    public bool IsFavorite { get; set; }
-
     public SimpleColor Color { get; set; }
 
     public string? ProfileName { get; set; }
@@ -73,4 +71,6 @@ public sealed class Account
     public string? Notes { get; set; }
 
     public ICollection<Hashtag> Hashtags { get; } = null!;
+
+    public ICollection<AccountInteraction> Interactions { get; } = null!;
 }

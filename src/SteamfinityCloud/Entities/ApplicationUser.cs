@@ -11,4 +11,6 @@ public sealed class ApplicationUser : IdentityUser<Guid>
     public DateTimeOffset? LastSignInTime { get; set; }
 
     public ICollection<Membership> Memberships { get; } = null!;
+
+    public ICollection<AccountInteraction> AccountInteractions { get; } = null!;
 }

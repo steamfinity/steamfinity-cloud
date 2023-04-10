@@ -21,6 +21,7 @@ builder.Services.AddScoped<ILibraryManager, LibraryManager>();
 builder.Services.AddScoped<IMembershipManager, MembershipManager>();
 builder.Services.AddScoped<IPermissionManager, PermissionManager>();
 builder.Services.AddScoped<IAccountManager, AccountManager>();
+builder.Services.AddScoped<IAccountInteractionManager, AccountInteractionManager>();
 builder.Services.AddScoped<ILimitProvider, LimitProvider>();
 
 builder.Services.AddScoped<ISteamApi, SteamApi>();

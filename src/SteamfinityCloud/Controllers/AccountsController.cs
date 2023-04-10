@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
@@ -18,19 +16,25 @@ namespace Steamfinity.Cloud.Controllers;
 public sealed class AccountsController : ControllerBase
 {
     private readonly ILibraryManager _libraryManager;
+    private readonly IMembershipManager _membershipManager;
     private readonly IPermissionManager _permissionManager;
     private readonly IAccountManager _accountManager;
+    private readonly IAccountInteractionManager _accountInteractionManager;
     private readonly ISteamApi _steamApi;
 
     public AccountsController(
         ILibraryManager libraryManager,
+        IMembershipManager membershipManager,
         IPermissionManager permissionManager,
         IAccountManager accountManager,
+        IAccountInteractionManager accountInteractionManager,
         ISteamApi steamApi)
     {
         _libraryManager = libraryManager ?? throw new ArgumentNullException(nameof(libraryManager));
+        _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
         _permissionManager = permissionManager ?? throw new ArgumentNullException(nameof(permissionManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
+        _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
         _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
     }
 
@@ -48,6 +52,33 @@ public sealed class AccountsController : ControllerBase
 
             return userId;
         }
+    }
+
+    [HttpGet("favorite")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public ActionResult<IAsyncEnumerable<AccountOverview>> GetFavoriteAccounts()
+    {
+        var libraries = _membershipManager.Memberships
+                        .AsNoTracking()
+                        .Where(m => m.UserId == UserId)
+                        .Select(m => m.LibraryId);
+
+        var accounts = _accountInteractionManager.Interactions
+                       .AsNoTracking()
+                       .Where(i => i.UserId == UserId && i.IsFavorite)
+                       .Include(i => i.Account)
+                       .Select(i => i.Account)
+                       .Where(a => libraries.Contains(a.LibraryId))
+                       .Select(a => new AccountOverview
+                       {
+                           Id = a.Id,
+                           ProfileName = a.ProfileName,
+                           AvatarUrl = a.AvatarUrl
+                       })
+                       .AsAsyncEnumerable();
+
+        return Ok(accounts);
     }
 
     [HttpGet("{accountId}")]
@@ -80,7 +111,7 @@ public sealed class AccountsController : ControllerBase
             LibraryId = account.LibraryId,
             SteamId = account.SteamId,
             Alias = account.Alias,
-            IsFavorite = account.IsFavorite,
+            IsFavorite = await _accountInteractionManager.IsFavoriteAsync(accountId, UserId),
             Color = account.Color,
             ProfileName = account.ProfileName,
             RealName = account.RealName,
@@ -268,15 +299,17 @@ public sealed class AccountsController : ControllerBase
             return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
         }
 
-        if (!await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        var result = await _accountInteractionManager.SetIsFavoriteAsync(account.Id, UserId, request.NewIsFavorite);
+
+        if (result == AccountIsFavoriteSetResult.AccountNotFound)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "access-denied");
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "account-not-found");
         }
 
-        account.IsFavorite = request.NewIsFavorite;
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
+        if (result == AccountIsFavoriteSetResult.UserNotFound)
+        {
+            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "user-not-found");
+        }
 
         return NoContent();
     }
