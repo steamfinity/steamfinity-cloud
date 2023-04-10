@@ -293,6 +293,24 @@ public sealed partial class SteamApi : ISteamApi
             account.AvatarUrl = null;
         }
 
+        if (playerElement.TryGetProperty("profileurl", out var profileUrlProperty))
+        {
+            account.ProfileUrl = profileUrlProperty.GetString();
+        }
+        else
+        {
+            account.ProfileUrl = null;
+        }
+
+        if (playerElement.TryGetProperty("profilestate", out var isProfileSetUpElement))
+        {
+            account.IsProfileSetUp = isProfileSetUpElement.GetInt32() == 1;
+        }
+        else
+        {
+            account.IsProfileSetUp = false;
+        }
+
         if (playerElement.TryGetProperty("communityvisibilitystate", out var isProfileVisibleElement))
         {
             account.IsProfileVisible = isProfileVisibleElement.GetInt32() == 3;
