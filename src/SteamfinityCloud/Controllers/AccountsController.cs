@@ -41,7 +41,7 @@ public sealed class AccountsController : SteamfinityController
     [HttpGet("favorite")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<IAsyncEnumerable<AccountOverview>> GetFavoriteAccounts()
+    public ActionResult<IAsyncEnumerable<AccountOverview>> GetFavoriteAccounts([FromQuery] AccountQueryOptions options)
     {
         var libraries = _membershipManager.Memberships
                         .AsNoTracking()
@@ -54,6 +54,7 @@ public sealed class AccountsController : SteamfinityController
                        .Include(i => i.Account)
                        .Select(i => i.Account)
                        .Where(a => libraries.Contains(a.LibraryId))
+                       .ApplyQueryOptions(options)
                        .Select(a => new AccountOverview
                        {
                            Id = a.Id,

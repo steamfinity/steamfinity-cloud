@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
+using Steamfinity.Cloud.Extensions;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
 using System.Data;
@@ -331,7 +332,7 @@ public sealed class LibrariesController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid libraryId)
+    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid libraryId, [FromQuery] AccountQueryOptions options)
     {
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
@@ -346,6 +347,7 @@ public sealed class LibrariesController : SteamfinityController
         var overviews = _accountManager.Accounts
                         .AsNoTracking()
                         .Where(a => a.LibraryId == libraryId)
+                        .ApplyQueryOptions(options)
                         .Select(a => new AccountOverview
                         {
                             Id = a.Id,
