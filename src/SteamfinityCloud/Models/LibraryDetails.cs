@@ -10,7 +10,7 @@ public sealed record LibraryDetails
 
     public required string? Description { get; init; }
 
-    public required MemberRole Role { get; init; }
+    public MemberRole? Role { get; init; }
 
     public required DateTimeOffset CreationTime { get; init; }
 }

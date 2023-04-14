@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Constants;
@@ -106,7 +106,7 @@ public sealed class LibrariesController : SteamfinityController
             Id = library.Id,
             Name = library.Name,
             Description = library.Description,
-            Role = (await _membershipManager.FindByIdAsync(libraryId, UserId))!.Role,
+            Role = (await _membershipManager.FindByIdAsync(libraryId, UserId))?.Role,
             CreationTime = library.CreationTime
         };
 
