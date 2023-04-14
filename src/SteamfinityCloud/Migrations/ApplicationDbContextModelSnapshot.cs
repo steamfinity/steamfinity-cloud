@@ -147,7 +147,7 @@ namespace Steamfinity.Cloud.Migrations
                         .IsRequired()
                         .HasColumnType("NVARCHAR2(2000)");
 
-                    b.Property<DateTimeOffset?>("CompetitiveCooldownExpirationTime")
+                    b.Property<DateTimeOffset?>("CooldownExpirationTime")
                         .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
 
                     b.Property<DateTimeOffset?>("CreationTime")

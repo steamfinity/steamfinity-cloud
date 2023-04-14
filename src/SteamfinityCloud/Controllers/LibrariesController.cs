@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Constants;
@@ -57,7 +57,7 @@ public sealed class LibrariesController : SteamfinityController
     }
 
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -79,7 +79,13 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status403Forbidden, "LIBRARY_LIMIT_EXCEEDED", "You are already a member of the maximum number of libraries.");
         }
 
-        return NoContent();
+        var overview = new LibraryOverview
+        {
+            Id = library.Id,
+            Name = library.Name
+        };
+
+        return CreatedAtAction("GetLibrary", new { LibraryId = library.Id }, overview);
     }
 
     [HttpGet("{libraryId}")]
@@ -373,7 +379,7 @@ public sealed class LibrariesController : SteamfinityController
     }
 
     [HttpPost("{libraryId}/accounts")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -422,7 +428,14 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status400BadRequest, "INVALID_STEAMID", "The provided STEAM ID is invalid.");
         }
 
-        return NoContent();
+        var overview = new AccountOverview
+        {
+            Id = account.Id,
+            ProfileName = account.ProfileName,
+            AvatarUrl = account.AvatarUrl
+        };
+
+        return CreatedAtAction("GetAccount", "Accounts", new { AccountId = account.Id }, overview);
     }
 
     [HttpDelete("{libraryId}")]
