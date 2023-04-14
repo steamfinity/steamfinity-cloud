@@ -67,7 +67,7 @@ public sealed class LibraryManager : ILibraryManager
 
     public async Task DeleteAsync(Library library)
     {
-        ArgumentNullException.ThrowIfNull(nameof(library));
+        ArgumentNullException.ThrowIfNull(library, nameof(library));
 
         _ = _context.Libraries.Attach(library);
         _ = _context.Libraries.Remove(library);
