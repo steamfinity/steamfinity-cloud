@@ -13,6 +13,11 @@ public static partial class AccountQueryExtension
         ArgumentNullException.ThrowIfNull(query, nameof(query));
         ArgumentNullException.ThrowIfNull(options, nameof(options));
 
+        return query.ApplyFilters(options).ApplySorting(options);
+    }
+
+    private static IQueryable<Account> ApplyFilters(this IQueryable<Account> query, AccountQueryOptions options)
+    {
         if (options.Color != null)
         {
             query = query.Where(a => a.Color == options.Color);
@@ -73,6 +78,89 @@ public static partial class AccountQueryExtension
             a.OptimizedLaunchParameters != null && a.OptimizedLaunchParameters.Contains(optimizedSearch) ||
             a.OptimizedNotes != null && a.OptimizedNotes.Contains(optimizedSearch) ||
             a.Hashtags.Any(h => h.Name.Contains(optimizedSearch)));
+        }
+
+        return query;
+    }
+
+    private static IQueryable<Account> ApplySorting(this IQueryable<Account> query, AccountQueryOptions options)
+    {
+        if (options.AccountSortingCriteria == AccountSortingCriteria.ProfileName)
+        {
+            if (options.AccountSortingOrder == AccountSortingOrder.Descending)
+            {
+                query = query.OrderByDescending(a => a.ProfileName);
+            }
+            else
+            {
+                query = query.OrderBy(a => a.ProfileName);
+            }
+        }
+        else if (options.AccountSortingCriteria == AccountSortingCriteria.CreationTime)
+        {
+            if (options.AccountSortingOrder == AccountSortingOrder.Descending)
+            {
+                query = query.OrderByDescending(a => a.CreationTime);
+            }
+            else
+            {
+                query = query.OrderBy(a => a.CreationTime);
+            }
+        }
+        else if (options.AccountSortingCriteria == AccountSortingCriteria.AdditionTime)
+        {
+            if (options.AccountSortingOrder == AccountSortingOrder.Descending)
+            {
+                query = query.OrderByDescending(a => a.AdditionTime);
+            }
+            else
+            {
+                query = query.OrderBy(a => a.AdditionTime);
+            }
+        }
+        else if (options.AccountSortingCriteria == AccountSortingCriteria.AdditionTime)
+        {
+            if (options.AccountSortingOrder == AccountSortingOrder.Descending)
+            {
+                query = query.OrderByDescending(a => a.AdditionTime);
+            }
+            else
+            {
+                query = query.OrderBy(a => a.AdditionTime);
+            }
+        }
+        else if (options.AccountSortingCriteria == AccountSortingCriteria.LastSignOutTime)
+        {
+            if (options.AccountSortingOrder == AccountSortingOrder.Descending)
+            {
+                query = query.OrderByDescending(a => a.LastSignOutTime);
+            }
+            else
+            {
+                query = query.OrderBy(a => a.LastSignOutTime);
+            }
+        }
+        else if (options.AccountSortingCriteria == AccountSortingCriteria.CompetitiveCooldownExpirationTime)
+        {
+            if (options.AccountSortingOrder == AccountSortingOrder.Descending)
+            {
+                query = query.OrderByDescending(a => a.CompetitiveCooldownExpirationTime);
+            }
+            else
+            {
+                query = query.OrderBy(a => a.CompetitiveCooldownExpirationTime);
+            }
+        }
+        else if (options.AccountSortingCriteria == AccountSortingCriteria.SkillGroup)
+        {
+            if (options.AccountSortingOrder == AccountSortingOrder.Descending)
+            {
+                query = query.OrderByDescending(a => a.SkillGroup);
+            }
+            else
+            {
+                query = query.OrderBy(a => a.SkillGroup);
+            }
         }
 
         return query;

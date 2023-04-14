@@ -6,6 +6,8 @@ public sealed record AccountQueryOptions
 {
     public string? Search { get; init; }
 
+    public string? Hashtag { get; init; }
+
     public SimpleColor? Color { get; init; }
 
     public SkillGroup? SkillGroup { get; init; }
@@ -16,5 +18,7 @@ public sealed record AccountQueryOptions
 
     public BannedAccountVisibility? BannedVisibility { get; init; }
 
-    public string? Hashtag { get; init; }
+    public AccountSortingCriteria AccountSortingCriteria { get; init; }
+
+    public AccountSortingOrder AccountSortingOrder { get; init; }
 }
