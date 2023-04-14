@@ -17,15 +17,18 @@ public sealed class AccountsController : SteamfinityController
     private readonly IPermissionManager _permissionManager;
     private readonly IAccountManager _accountManager;
     private readonly IAccountInteractionManager _accountInteractionManager;
+    private readonly ISteamApi _steamApi;
 
     public AccountsController(
         IPermissionManager permissionManager,
         IAccountManager accountManager,
-        IAccountInteractionManager accountInteractionManager)
+        IAccountInteractionManager accountInteractionManager,
+        ISteamApi steamApi)
     {
         _permissionManager = permissionManager ?? throw new ArgumentNullException(nameof(permissionManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
+        _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
     }
 
     [HttpGet("{accountId}")]
@@ -35,7 +38,7 @@ public sealed class AccountsController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<AccountDetails>> GetAccountAsync(Guid accountId)
+    public async Task<ActionResult<AccountDetails>> GetAccountAsync(Guid accountId, bool refreshAccount = false)
     {
         var account = await _accountManager.Accounts
                             .Where(a => a.Id == accountId)
@@ -45,6 +48,11 @@ public sealed class AccountsController : SteamfinityController
         if (account == null)
         {
             return AccountNotFoundError();
+        }
+
+        if (refreshAccount)
+        {
+            await _steamApi.TryRefreshAccountAsync(account);
         }
 
         if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(account.LibraryId, UserId))

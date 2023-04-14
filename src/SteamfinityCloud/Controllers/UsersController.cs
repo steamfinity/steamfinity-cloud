@@ -22,19 +22,22 @@ public sealed class UsersController : SteamfinityController
     private readonly IMembershipManager _membershipManager;
     private readonly IAccountManager _accountManager;
     private readonly IAccountInteractionManager _accountInteractionManager;
+    private readonly ISteamApi _steamApi;
 
     public UsersController(
         UserManager<ApplicationUser> userManager,
         RoleManager<ApplicationRole> roleManager,
         IMembershipManager membershipManager,
         IAccountManager accountManager,
-        IAccountInteractionManager accountInteractionManager)
+        IAccountInteractionManager accountInteractionManager,
+        ISteamApi steamApi)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
         _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
+        _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
     }
 
     [HttpGet]
@@ -169,7 +172,7 @@ public sealed class UsersController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid userId, [FromQuery] AccountQueryOptions options)
+    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid userId, [FromQuery] AccountQueryOptions options, bool refreshAccounts = false)
     {
         ArgumentNullException.ThrowIfNull(options, nameof(options));
 
@@ -189,19 +192,26 @@ public sealed class UsersController : SteamfinityController
                                   .Where(m => m.UserId == userId)
                                   .Select(m => m.LibraryId);
 
-        var accountOverviews = _accountManager.Accounts
-                               .AsNoTracking()
-                               .Where(a => authorizedLibraries.Contains(a.LibraryId))
-                               .ApplyQueryOptions(options)
-                               .Select(a => new AccountOverview
-                               {
-                                   Id = a.Id,
-                                   ProfileName = a.ProfileName,
-                                   AvatarUrl = a.AvatarUrl
-                               })
-                               .AsAsyncEnumerable();
+        var accounts = _accountManager.Accounts
+                       .AsNoTracking()
+                       .Where(a => authorizedLibraries.Contains(a.LibraryId))
+                       .ApplyQueryOptions(options);
 
-        return Ok(accountOverviews);
+        if (refreshAccounts)
+        {
+            await _steamApi.RefreshAccountsAsync(accounts);
+        }
+
+        var overviews = accounts
+                        .Select(a => new AccountOverview
+                        {
+                            Id = a.Id,
+                            ProfileName = a.ProfileName,
+                            AvatarUrl = a.AvatarUrl
+                        })
+                        .AsAsyncEnumerable();
+
+        return Ok(overviews);
     }
 
     [HttpGet("{userId}/favorites")]
@@ -211,7 +221,7 @@ public sealed class UsersController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetFavoriteAccountsAsync(Guid userId, [FromQuery] AccountQueryOptions options)
+    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetFavoriteAccountsAsync(Guid userId, [FromQuery] AccountQueryOptions options, bool refreshAccounts = false)
     {
         ArgumentNullException.ThrowIfNull(options, nameof(options));
 
@@ -231,22 +241,29 @@ public sealed class UsersController : SteamfinityController
                                   .Where(m => m.UserId == userId)
                                   .Select(m => m.LibraryId);
 
-        var accountOverviews = _accountInteractionManager.Interactions
-                               .AsNoTracking()
-                               .Where(i => i.UserId == userId && i.IsFavorite)
-                               .Include(i => i.Account)
-                               .Select(i => i.Account)
-                               .Where(a => authorizedLibraries.Contains(a.LibraryId))
-                               .ApplyQueryOptions(options)
-                               .Select(a => new AccountOverview
-                               {
-                                   Id = a.Id,
-                                   ProfileName = a.ProfileName,
-                                   AvatarUrl = a.AvatarUrl
-                               })
-                               .AsAsyncEnumerable();
+        var accounts = _accountInteractionManager.Interactions
+                       .AsNoTracking()
+                       .Where(i => i.UserId == userId && i.IsFavorite)
+                       .Include(i => i.Account)
+                       .Select(i => i.Account)
+                       .Where(a => authorizedLibraries.Contains(a.LibraryId))
+                       .ApplyQueryOptions(options);
 
-        return Ok(accountOverviews);
+        if (refreshAccounts)
+        {
+            await _steamApi.RefreshAccountsAsync(accounts);
+        }
+
+        var overviews = accounts
+                        .Select(a => new AccountOverview
+                        {
+                            Id = a.Id,
+                            ProfileName = a.ProfileName,
+                            AvatarUrl = a.AvatarUrl
+                        })
+                        .AsAsyncEnumerable();
+
+        return Ok(overviews);
     }
 
     [HttpGet("{userId}/hashtags")]

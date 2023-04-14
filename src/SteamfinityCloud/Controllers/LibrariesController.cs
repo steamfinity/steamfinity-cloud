@@ -336,7 +336,7 @@ public sealed class LibrariesController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid libraryId, [FromQuery] AccountQueryOptions options)
+    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid libraryId, [FromQuery] AccountQueryOptions options, bool refreshAccounts = false)
     {
         ArgumentNullException.ThrowIfNull(options, nameof(options));
 
@@ -350,19 +350,26 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of this library.");
         }
 
-        var accountOverviews = _accountManager.Accounts
-                               .AsNoTracking()
-                               .Where(a => a.LibraryId == libraryId)
-                               .ApplyQueryOptions(options)
-                               .Select(a => new AccountOverview
-                               {
-                                   Id = a.Id,
-                                   ProfileName = a.ProfileName,
-                                   AvatarUrl = a.AvatarUrl
-                               })
-                                .AsAsyncEnumerable();
+        var accounts = _accountManager.Accounts
+                       .AsNoTracking()
+                       .Where(a => a.LibraryId == libraryId)
+                       .ApplyQueryOptions(options);
 
-        return Ok(accountOverviews);
+        if (refreshAccounts)
+        {
+            await _steamApi.RefreshAccountsAsync(accounts);
+        }
+
+        var overviews = accounts
+                        .Select(a => new AccountOverview
+                        {
+                            Id = a.Id,
+                            ProfileName = a.ProfileName,
+                            AvatarUrl = a.AvatarUrl
+                        })
+                        .AsAsyncEnumerable();
+
+        return Ok(overviews);
     }
 
     [HttpPost("{libraryId}/accounts")]
