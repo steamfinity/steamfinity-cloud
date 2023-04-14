@@ -37,13 +37,34 @@ public sealed class UsersController : SteamfinityController
         _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
     }
 
+    [HttpGet]
+    [Authorize(PolicyNames.Administrators)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public ActionResult<IAsyncEnumerable<UserOverview>> GetAllUserOverviewsAsync([FromQuery] PageOptions pageOptions)
+    {
+        var overviews = _userManager.Users
+                        .AsNoTracking()
+                        .Skip((pageOptions.PageNumber - 1) * pageOptions.PageSize)
+                        .Take(pageOptions.PageSize)
+                        .Select(u => new UserOverview
+                        {
+                            Id = u.Id,
+                            UserName = u.UserName
+                        })
+                        .AsAsyncEnumerable();
+
+        return Ok(overviews);
+    }
+
     [HttpGet("search/{userName}")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<UserSearchResult>> FindUserByNameAsync([Required] string userName)
+    public async Task<ActionResult<UserSearchResult>> FindUserByNameAsync(string userName)
     {
         ArgumentNullException.ThrowIfNull(userName, nameof(userName));
 
@@ -59,6 +80,86 @@ public sealed class UsersController : SteamfinityController
         };
 
         return Ok(result);
+    }
+
+    [HttpGet("current")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<UserDetails>> GetCurrentUserOverview()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return UserNotFoundError();
+        }
+
+        var overview = CreateUserOverview(user);
+        return Ok(overview);
+    }
+
+    [HttpGet("current/details")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<UserDetails>> GetCurrentUserDetailsAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return UserNotFoundError();
+        }
+
+        var details = await CreateUserDetailsAsync(user);
+        return Ok(details);
+    }
+
+    [HttpGet("{userId}")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<UserOverview>> GetUserOverviewAsync(Guid userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            return UserNotFoundError();
+        }
+
+        var overview = CreateUserOverview(user);
+        return Ok(overview);
+    }
+
+    [HttpGet("{userId}/details")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<UserDetails>> GetUserDetailsAsync(Guid userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            return UserNotFoundError();
+        }
+
+        if (userId != UserId && !IsAdministrator)
+        {
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to view other users' details.");
+        }
+
+        var details = await CreateUserDetailsAsync(user);
+        return Ok(details);
     }
 
     [HttpGet("{userId}/accounts")]
@@ -393,9 +494,28 @@ public sealed class UsersController : SteamfinityController
 
         return NoContent();
     }
-
     private static ObjectResult UserNotFoundError()
     {
         return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
+    }
+
+    private static UserOverview CreateUserOverview(ApplicationUser user)
+    {
+        return new UserOverview
+        {
+            Id = user.Id,
+            UserName = user.UserName
+        };
+    }
+
+    private async Task<UserDetails> CreateUserDetailsAsync(ApplicationUser user)
+    {
+        return new UserDetails
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            SignUpTime = user.SignUpTime,
+            Roles = await _userManager.GetRolesAsync(user)
+        };
     }
 }
