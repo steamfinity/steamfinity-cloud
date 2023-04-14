@@ -16,5 +16,5 @@ public sealed record AccountQueryOptions
 
     public BannedAccountVisibility? BannedVisibility { get; init; }
 
-    public IEnumerable<string>? Hashtags { get; init; }
+    public string? Hashtag { get; init; }
 }

@@ -43,11 +43,16 @@ public static partial class AccountQueryExtension
 
         if (options.BannedVisibility == BannedAccountVisibility.ShowBanned)
         {
-            query = query.Where(a => (a.IsCommunityBanned.HasValue && a.IsCommunityBanned.Value) || a.NumberOfVACBans > 0 || a.NumberOfGameBans > 0);
+            query = query.Where(a => a.IsCommunityBanned.HasValue && a.IsCommunityBanned.Value || a.NumberOfVACBans > 0 || a.NumberOfGameBans > 0);
         }
         else if (options.BannedVisibility == BannedAccountVisibility.HideBanned)
         {
-            query = query.Where(a => !((a.IsCommunityBanned.HasValue && a.IsCommunityBanned.Value) || a.NumberOfVACBans > 0 || a.NumberOfGameBans > 0));
+            query = query.Where(a => !(a.IsCommunityBanned.HasValue && a.IsCommunityBanned.Value || a.NumberOfVACBans > 0 || a.NumberOfGameBans > 0));
+        }
+
+        if (options.Hashtag != null)
+        {
+            query = query.Where(a => a.Hashtags.Any(h => h.Name == options.Hashtag));
         }
 
         if (options.Search != null)
@@ -59,14 +64,15 @@ public static partial class AccountQueryExtension
             a.SteamId.ToString().Contains(numberSearch) ||
             (a.SteamId - OtherConstants.SteamId64Base).ToString().Contains(numberSearch) ||
             ((a.SteamId - OtherConstants.SteamId64Base - 1) / 2ul).ToString().Contains(numberSearch) ||
-            (a.OptimizedAccountName != null && a.OptimizedAccountName.Contains(optimizedSearch)) ||
-            (a.OptimizedAlias != null && a.OptimizedAlias.Contains(optimizedSearch)) ||
-            (a.OptimizedProfileName != null && a.OptimizedProfileName.Contains(optimizedSearch)) ||
-            (a.OptimizedRealName != null && a.OptimizedRealName.Contains(optimizedSearch)) ||
-            (a.OptimizedProfileUrl != null && a.OptimizedProfileUrl.Contains(optimizedSearch)) ||
-            (a.OptimizedCurrentGameName != null && a.OptimizedCurrentGameName.Contains(optimizedSearch)) ||
-            (a.OptimizedLaunchParameters != null && a.OptimizedLaunchParameters.Contains(optimizedSearch)) ||
-            (a.OptimizedNotes != null && a.OptimizedNotes.Contains(optimizedSearch)));
+            a.OptimizedAccountName != null && a.OptimizedAccountName.Contains(optimizedSearch) ||
+            a.OptimizedAlias != null && a.OptimizedAlias.Contains(optimizedSearch) ||
+            a.OptimizedProfileName != null && a.OptimizedProfileName.Contains(optimizedSearch) ||
+            a.OptimizedRealName != null && a.OptimizedRealName.Contains(optimizedSearch) ||
+            a.OptimizedProfileUrl != null && a.OptimizedProfileUrl.Contains(optimizedSearch) ||
+            a.OptimizedCurrentGameName != null && a.OptimizedCurrentGameName.Contains(optimizedSearch) ||
+            a.OptimizedLaunchParameters != null && a.OptimizedLaunchParameters.Contains(optimizedSearch) ||
+            a.OptimizedNotes != null && a.OptimizedNotes.Contains(optimizedSearch) ||
+            a.Hashtags.Any(h => h.Name.Contains(optimizedSearch)));
         }
 
         return query;
