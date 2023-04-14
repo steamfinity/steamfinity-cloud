@@ -18,17 +18,20 @@ namespace Steamfinity.Cloud.Controllers;
 public sealed class UsersController : SteamfinityController
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly IMembershipManager _membershipManager;
     private readonly IAccountManager _accountManager;
     private readonly IAccountInteractionManager _accountInteractionManager;
 
     public UsersController(
         UserManager<ApplicationUser> userManager,
+        RoleManager<ApplicationRole> roleManager,
         IMembershipManager membershipManager,
         IAccountManager accountManager,
         IAccountInteractionManager accountInteractionManager)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+        _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
         _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
@@ -47,7 +50,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByNameAsync(userName);
         if (user == null)
         {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this username.");
+            return UserNotFoundError();
         }
 
         var result = new UserSearchResult
@@ -72,7 +75,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
+            return UserNotFoundError();
         }
 
         if (userId != UserId && !IsAdministrator)
@@ -114,7 +117,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
+            return UserNotFoundError();
         }
 
         if (userId != UserId && !IsAdministrator)
@@ -153,7 +156,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
+            return UserNotFoundError();
         }
 
         if (userId != UserId && !IsAdministrator)
@@ -190,7 +193,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
+            return UserNotFoundError();
         }
 
         if (userId != UserId && !IsAdministrator)
@@ -233,7 +236,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
+            return UserNotFoundError();
         }
 
         if (userId != UserId && !IsAdministrator)
@@ -278,6 +281,82 @@ public sealed class UsersController : SteamfinityController
         return NoContent();
     }
 
+    [HttpPost("{userId}/roles")]
+    [Authorize(PolicyNames.Administrators)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AddToRoleAsync(Guid userId, UserRoleAdditionRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            return UserNotFoundError();
+        }
+
+        if (await _roleManager.FindByNameAsync(request.RoleName) == null)
+        {
+            return ApiError(StatusCodes.Status404NotFound, "ROLE_NOT_FOUND", "There is no role with this name.");
+        }
+
+        if (await _userManager.IsInRoleAsync(user, request.RoleName))
+        {
+            return ApiError(StatusCodes.Status404NotFound, "USER_ALREADY_IN_ROLE", "The user has already been added to this role.");
+        }
+
+        var result = await _userManager.AddToRoleAsync(user, request.RoleName);
+        if (!result.Succeeded)
+        {
+            var errorCode = result.Errors.First().Code;
+            throw new IdentityException(errorCode);
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("{userId}/roles/{roleName}")]
+    [Authorize(PolicyNames.Administrators)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RemoveFromRoleAsync(Guid userId, string roleName)
+    {
+        ArgumentNullException.ThrowIfNull(roleName, nameof(roleName));
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            return UserNotFoundError();
+        }
+
+        if (await _roleManager.FindByNameAsync(roleName) == null)
+        {
+            return ApiError(StatusCodes.Status404NotFound, "ROLE_NOT_FOUND", "There is no role with this name.");
+        }
+
+        if (!await _userManager.IsInRoleAsync(user, roleName))
+        {
+            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_IN_ROLE", "The user is not added to this role.");
+        }
+
+        var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+        if (!result.Succeeded)
+        {
+            var errorCode = result.Errors.First().Code;
+            throw new IdentityException(errorCode);
+        }
+
+        return NoContent();
+    }
+
     [HttpDelete("{userId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -292,7 +371,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
+            return UserNotFoundError();
         }
 
         if (userId != UserId && !IsAdministrator)
@@ -313,5 +392,10 @@ public sealed class UsersController : SteamfinityController
         }
 
         return NoContent();
+    }
+
+    private static ObjectResult UserNotFoundError()
+    {
+        return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
     }
 }
