@@ -51,8 +51,7 @@ public sealed class UsersController : SteamfinityController
 
         var overviews = _userManager.Users
                         .AsNoTracking()
-                        .Skip((pageOptions.PageNumber - 1) * pageOptions.PageSize)
-                        .Take(pageOptions.PageSize)
+                        .ApplyPaging(pageOptions)
                         .Select(u => new UserOverview
                         {
                             Id = u.Id,
