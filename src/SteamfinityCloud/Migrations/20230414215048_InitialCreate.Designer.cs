@@ -12,7 +12,7 @@ using Steamfinity.Cloud;
 namespace Steamfinity.Cloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230410213713_InitialCreate")]
+    [Migration("20230414215048_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -150,7 +150,7 @@ namespace Steamfinity.Cloud.Migrations
                         .IsRequired()
                         .HasColumnType("NVARCHAR2(2000)");
 
-                    b.Property<DateTimeOffset?>("CompetitiveCooldownExpirationTime")
+                    b.Property<DateTimeOffset?>("CooldownExpirationTime")
                         .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
 
                     b.Property<DateTimeOffset?>("CreationTime")
