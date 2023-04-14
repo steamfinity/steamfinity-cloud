@@ -47,6 +47,8 @@ public sealed class UsersController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public ActionResult<IAsyncEnumerable<UserOverview>> GetAllUserOverviewsAsync([FromQuery] PageOptions pageOptions)
     {
+        ArgumentNullException.ThrowIfNull(pageOptions, nameof(pageOptions));
+
         var overviews = _userManager.Users
                         .AsNoTracking()
                         .Skip((pageOptions.PageNumber - 1) * pageOptions.PageSize)
