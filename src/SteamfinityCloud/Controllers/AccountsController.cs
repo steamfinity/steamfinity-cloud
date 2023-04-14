@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Constants;
-using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
 using Steamfinity.Cloud.Extensions;
 using Steamfinity.Cloud.Models;
@@ -15,80 +14,18 @@ namespace Steamfinity.Cloud.Controllers;
 [Authorize(PolicyNames.Users)]
 public sealed class AccountsController : SteamfinityController
 {
-    private readonly ILibraryManager _libraryManager;
-    private readonly IMembershipManager _membershipManager;
     private readonly IPermissionManager _permissionManager;
     private readonly IAccountManager _accountManager;
     private readonly IAccountInteractionManager _accountInteractionManager;
-    private readonly ISteamApi _steamApi;
 
     public AccountsController(
-        ILibraryManager libraryManager,
-        IMembershipManager membershipManager,
         IPermissionManager permissionManager,
         IAccountManager accountManager,
-        IAccountInteractionManager accountInteractionManager,
-        ISteamApi steamApi)
+        IAccountInteractionManager accountInteractionManager)
     {
-        _libraryManager = libraryManager ?? throw new ArgumentNullException(nameof(libraryManager));
-        _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
         _permissionManager = permissionManager ?? throw new ArgumentNullException(nameof(permissionManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
-        _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
-    }
-
-    [HttpGet("all")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<IAsyncEnumerable<AccountOverview>> GetAllAccounts([FromQuery] AccountQueryOptions options)
-    {
-        var authorizedLibraries = _membershipManager.Memberships
-                                  .AsNoTracking()
-                                  .Where(m => m.UserId == UserId)
-                                  .Select(m => m.LibraryId);
-
-        var accountOverviews = _accountManager.Accounts
-                               .AsNoTracking()
-                               .Where(a => authorizedLibraries.Contains(a.LibraryId))
-                               .ApplyQueryOptions(options)
-                               .Select(a => new AccountOverview
-                               {
-                                   Id = a.Id,
-                                   ProfileName = a.ProfileName,
-                                   AvatarUrl = a.AvatarUrl
-                               })
-                               .AsAsyncEnumerable();
-
-        return Ok(accountOverviews);
-    }
-
-    [HttpGet("favorite")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<IAsyncEnumerable<AccountOverview>> GetFavoriteAccounts([FromQuery] AccountQueryOptions options)
-    {
-        var authorizedLibraries = _membershipManager.Memberships
-                                  .AsNoTracking()
-                                  .Where(m => m.UserId == UserId)
-                                  .Select(m => m.LibraryId);
-
-        var accountOverviews = _accountInteractionManager.Interactions
-                               .AsNoTracking()
-                               .Where(i => i.UserId == UserId && i.IsFavorite)
-                               .Include(i => i.Account)
-                               .Select(i => i.Account)
-                               .Where(a => authorizedLibraries.Contains(a.LibraryId))
-                               .ApplyQueryOptions(options)
-                               .Select(a => new AccountOverview
-                               {
-                                   Id = a.Id,
-                                   ProfileName = a.ProfileName,
-                                   AvatarUrl = a.AvatarUrl
-                               })
-                               .AsAsyncEnumerable();
-
-        return Ok(accountOverviews);
     }
 
     [HttpGet("{accountId}")]
@@ -151,59 +88,6 @@ public sealed class AccountsController : SteamfinityController
         };
 
         return Ok(details);
-    }
-
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AddAccountAsync(AccountAdditionRequest request)
-    {
-        ArgumentNullException.ThrowIfNull(request, nameof(request));
-
-        if (!await _libraryManager.ExistsAsync(request.LibraryId))
-        {
-            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
-        }
-
-        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(request.LibraryId, UserId))
-        {
-            return NoAccountManagementPermissionsError();
-        }
-
-        var steamId = await _steamApi.TryResolveSteamIdAsync(request.SteamId);
-        if (steamId == null)
-        {
-            return ApiError(StatusCodes.Status400BadRequest, "INVALID_STEAMID", "The provided STEAM ID is invalid.");
-        }
-
-        var account = new Account
-        {
-            LibraryId = request.LibraryId,
-            SteamId = steamId.Value
-        };
-
-        var result = await _accountManager.AddAsync(account);
-
-        if (result == AccountAdditionResult.LibraryNotFound)
-        {
-            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
-        }
-
-        if (result == AccountAdditionResult.LibrarySizeExceeded)
-        {
-            return ApiError(StatusCodes.Status403Forbidden, "LIBRARY_SIZE_EXCEEDED", "This library already has the maximum number of accounts.");
-        }
-
-        if (result == AccountAdditionResult.InvalidSteamId)
-        {
-            return ApiError(StatusCodes.Status400BadRequest, "INVALID_STEAMID", "The provided STEAM ID is invalid.");
-        }
-
-        return NoContent();
     }
 
     [HttpPatch("{accountId}/account-name")]

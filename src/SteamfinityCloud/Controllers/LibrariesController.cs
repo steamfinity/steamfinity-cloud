@@ -20,17 +20,20 @@ public sealed class LibrariesController : SteamfinityController
     private readonly IMembershipManager _membershipManager;
     private readonly IPermissionManager _permissionManager;
     private readonly IAccountManager _accountManager;
+    private readonly ISteamApi _steamApi;
 
     public LibrariesController(
         ILibraryManager libraryManager,
         IMembershipManager membershipManager,
         IPermissionManager permissionManager,
-        IAccountManager accountManager)
+        IAccountManager accountManager,
+        ISteamApi steamApi)
     {
         _libraryManager = libraryManager ?? throw new ArgumentNullException(nameof(libraryManager));
         _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
         _permissionManager = permissionManager ?? throw new ArgumentNullException(nameof(permissionManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
+        _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
     }
 
     [HttpGet]
@@ -331,9 +334,12 @@ public sealed class LibrariesController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid libraryId, [FromQuery] AccountQueryOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options, nameof(options));
+
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
             return LibraryNotFoundError();
@@ -357,6 +363,59 @@ public sealed class LibrariesController : SteamfinityController
                                 .AsAsyncEnumerable();
 
         return Ok(accountOverviews);
+    }
+
+    [HttpPost("{libraryId}/accounts")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AddAccountAsync(Guid libraryId, AccountAdditionRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        if (!await _libraryManager.ExistsAsync(libraryId))
+        {
+            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
+        }
+
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(libraryId, UserId))
+        {
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage accounts in this library.");
+        }
+
+        var steamId = await _steamApi.TryResolveSteamIdAsync(request.SteamId);
+        if (steamId == null)
+        {
+            return ApiError(StatusCodes.Status400BadRequest, "INVALID_STEAMID", "The provided STEAM ID is invalid.");
+        }
+
+        var account = new Account
+        {
+            LibraryId = libraryId,
+            SteamId = steamId.Value
+        };
+
+        var result = await _accountManager.AddAsync(account);
+
+        if (result == AccountAdditionResult.LibraryNotFound)
+        {
+            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
+        }
+
+        if (result == AccountAdditionResult.LibrarySizeExceeded)
+        {
+            return ApiError(StatusCodes.Status403Forbidden, "LIBRARY_SIZE_EXCEEDED", "This library already has the maximum number of accounts.");
+        }
+
+        if (result == AccountAdditionResult.InvalidSteamId)
+        {
+            return ApiError(StatusCodes.Status400BadRequest, "INVALID_STEAMID", "The provided STEAM ID is invalid.");
+        }
+
+        return NoContent();
     }
 
     [HttpDelete("{libraryId}")]
