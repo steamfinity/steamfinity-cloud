@@ -79,7 +79,7 @@ public sealed class AccountsController : SteamfinityController
             AdditionTime = account.AdditionTime,
             LastEditTime = account.LastEditTime,
             LastUpdateTime = account.LastUpdateTime,
-            CompetitiveCooldownExpirationTime = account.CompetitiveCooldownExpirationTime,
+            CooldownExpirationTime = account.CooldownExpirationTime,
             CreationTime = account.CreationTime,
             LastSignOutTime = account.LastSignOutTime,
             LaunchParameters = account.LaunchParameters,
@@ -290,6 +290,35 @@ public sealed class AccountsController : SteamfinityController
         }
 
         account.SkillGroup = request.NewSkillGroup;
+        account.LastEditTime = DateTimeOffset.UtcNow;
+
+        await _accountManager.UpdateAsync(account);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{accountId}/cooldown-expiration-time")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangeCooldownExpirationTimeAsync(Guid accountId, CooldownExpirationTimeChangeRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return AccountNotFoundError();
+        }
+
+        if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
+        {
+            return NoAccountManagementPermissionsError();
+        }
+
+        account.CooldownExpirationTime = request.NewCooldownExpirationTime;
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);

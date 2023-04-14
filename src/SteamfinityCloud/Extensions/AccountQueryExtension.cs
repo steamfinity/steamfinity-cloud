@@ -144,11 +144,11 @@ public static partial class AccountQueryExtension
         {
             if (options.AccountSortingOrder == AccountSortingOrder.Descending)
             {
-                query = query.OrderByDescending(a => a.CompetitiveCooldownExpirationTime);
+                query = query.OrderByDescending(a => a.CooldownExpirationTime);
             }
             else
             {
-                query = query.OrderBy(a => a.CompetitiveCooldownExpirationTime);
+                query = query.OrderBy(a => a.CooldownExpirationTime);
             }
         }
         else if (options.AccountSortingCriteria == AccountSortingCriteria.SkillGroup)

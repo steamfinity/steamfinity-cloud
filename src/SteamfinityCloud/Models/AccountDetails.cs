@@ -54,7 +54,7 @@ public sealed record AccountDetails
 
     public required DateTimeOffset? LastUpdateTime { get; init; }
 
-    public required DateTimeOffset? CompetitiveCooldownExpirationTime { get; init; }
+    public required DateTimeOffset? CooldownExpirationTime { get; init; }
 
     public required DateTimeOffset? CreationTime { get; init; }
 
