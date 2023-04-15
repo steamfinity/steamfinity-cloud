@@ -4,7 +4,7 @@ namespace Steamfinity.Cloud.Extensions;
 
 public static class QueryPaggingExtension
 {
-    public static IQueryable<T> ApplyPaging<T>(this IQueryable<T> query, PageOptions options)
+    public static IQueryable<T> ApplyPageOptions<T>(this IQueryable<T> query, PageOptions options)
     {
         ArgumentNullException.ThrowIfNull(query, nameof(query));
         ArgumentNullException.ThrowIfNull(options, nameof(options));

@@ -8,7 +8,6 @@ using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Extensions;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
-using System.ComponentModel.DataAnnotations;
 
 namespace Steamfinity.Cloud.Controllers;
 
@@ -51,7 +50,7 @@ public sealed class UsersController : SteamfinityController
 
         var overviews = _userManager.Users
                         .AsNoTracking()
-                        .ApplyPaging(pageOptions)
+                        .ApplyPageOptions(pageOptions)
                         .Select(u => new UserOverview
                         {
                             Id = u.Id,
@@ -88,7 +87,6 @@ public sealed class UsersController : SteamfinityController
 
     [HttpGet("current")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -107,7 +105,6 @@ public sealed class UsersController : SteamfinityController
 
     [HttpGet("current/details")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -173,9 +170,10 @@ public sealed class UsersController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid userId, [FromQuery] AccountQueryOptions options, bool refreshAccounts = false)
+    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid userId, [FromQuery] AccountQueryOptions queryOptions, [FromQuery] PageOptions pageOptions, bool refreshAccounts = false)
     {
-        ArgumentNullException.ThrowIfNull(options, nameof(options));
+        ArgumentNullException.ThrowIfNull(queryOptions, nameof(queryOptions));
+        ArgumentNullException.ThrowIfNull(pageOptions, nameof(pageOptions));
 
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
@@ -196,7 +194,8 @@ public sealed class UsersController : SteamfinityController
         var accounts = _accountManager.Accounts
                        .AsNoTracking()
                        .Where(a => authorizedLibraries.Contains(a.LibraryId))
-                       .ApplyQueryOptions(options);
+                       .ApplyQueryOptions(queryOptions)
+                       .ApplyPageOptions(pageOptions);
 
         if (refreshAccounts)
         {
@@ -222,9 +221,10 @@ public sealed class UsersController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetFavoriteAccountsAsync(Guid userId, [FromQuery] AccountQueryOptions options, bool refreshAccounts = false)
+    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetFavoriteAccountsAsync(Guid userId, [FromQuery] AccountQueryOptions queryOptions, [FromQuery] PageOptions pageOptions, bool refreshAccounts = false)
     {
-        ArgumentNullException.ThrowIfNull(options, nameof(options));
+        ArgumentNullException.ThrowIfNull(queryOptions, nameof(queryOptions));
+        ArgumentNullException.ThrowIfNull(pageOptions, nameof(pageOptions));
 
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
@@ -248,7 +248,8 @@ public sealed class UsersController : SteamfinityController
                        .Include(i => i.Account)
                        .Select(i => i.Account)
                        .Where(a => authorizedLibraries.Contains(a.LibraryId))
-                       .ApplyQueryOptions(options);
+                       .ApplyQueryOptions(queryOptions)
+                       .ApplyPageOptions(pageOptions);
 
         if (refreshAccounts)
         {
@@ -269,9 +270,13 @@ public sealed class UsersController : SteamfinityController
 
     [HttpGet("{userId}/hashtags")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<IAsyncEnumerable<string>>> GetHashtagsAsync(Guid userId)
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<IAsyncEnumerable<string>>> GetHashtagsAsync(Guid userId, [FromQuery] PageOptions pageOptions)
     {
+        ArgumentNullException.ThrowIfNull(pageOptions, nameof(pageOptions));
+
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
@@ -290,6 +295,7 @@ public sealed class UsersController : SteamfinityController
             .ThenInclude(l => l.Accounts)
             .ThenInclude(a => a.Hashtags)
             .SelectMany(m => m.Library.Accounts.SelectMany(a => a.Hashtags))
+            .ApplyPageOptions(pageOptions)
             .Select(h => h.Name)
             .Distinct()
             .AsAsyncEnumerable();
@@ -512,6 +518,7 @@ public sealed class UsersController : SteamfinityController
 
         return NoContent();
     }
+
     private static ObjectResult UserNotFoundError()
     {
         return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");

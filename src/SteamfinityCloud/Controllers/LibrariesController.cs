@@ -40,11 +40,14 @@ public sealed class LibrariesController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public ActionResult<IAsyncEnumerable<LibraryOverview>> GetLibrariesAsync()
+    public ActionResult<IAsyncEnumerable<LibraryOverview>> GetLibrariesAsync([FromQuery] PageOptions pageOptions)
     {
+        ArgumentNullException.ThrowIfNull(pageOptions, nameof(pageOptions));
+
         var libraries = _membershipManager.Memberships
                         .AsNoTracking()
                         .Where(m => m.UserId == UserId)
+                        .ApplyPageOptions(pageOptions)
                         .Include(m => m.Library)
                         .Select(m => new LibraryOverview
                         {
@@ -182,8 +185,10 @@ public sealed class LibrariesController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IAsyncEnumerable<MemberOverview>>> GetMembersAsync(Guid libraryId)
+    public async Task<ActionResult<IAsyncEnumerable<MemberOverview>>> GetMembersAsync(Guid libraryId, [FromQuery] PageOptions pageOptions)
     {
+        ArgumentNullException.ThrowIfNull(pageOptions, nameof(pageOptions));
+
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
             return LibraryNotFoundError();
@@ -197,6 +202,7 @@ public sealed class LibrariesController : SteamfinityController
         var overviews = _membershipManager.Memberships
                         .AsNoTracking()
                         .Where(m => m.LibraryId == libraryId)
+                        .ApplyPageOptions(pageOptions)
                         .Include(m => m.User)
                         .Select(m => new MemberOverview
                         {
@@ -342,9 +348,10 @@ public sealed class LibrariesController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid libraryId, [FromQuery] AccountQueryOptions options, bool refreshAccounts = false)
+    public async Task<ActionResult<IAsyncEnumerable<AccountOverview>>> GetAccountsAsync(Guid libraryId, [FromQuery] AccountQueryOptions queryOptions, [FromQuery] PageOptions pageOptions, bool refreshAccounts = false)
     {
-        ArgumentNullException.ThrowIfNull(options, nameof(options));
+        ArgumentNullException.ThrowIfNull(queryOptions, nameof(queryOptions));
+        ArgumentNullException.ThrowIfNull(pageOptions, nameof(pageOptions));
 
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
@@ -359,7 +366,8 @@ public sealed class LibrariesController : SteamfinityController
         var accounts = _accountManager.Accounts
                        .AsNoTracking()
                        .Where(a => a.LibraryId == libraryId)
-                       .ApplyQueryOptions(options);
+                       .ApplyQueryOptions(queryOptions)
+                       .ApplyPageOptions(pageOptions);
 
         if (refreshAccounts)
         {
