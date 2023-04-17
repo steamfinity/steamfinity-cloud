@@ -279,6 +279,45 @@ namespace Steamfinity.Cloud.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Activities",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "RAW(16)", nullable: false),
+                    Type = table.Column<string>(type: "NVARCHAR2(2000)", nullable: false),
+                    InstigatorId = table.Column<Guid>(type: "RAW(16)", nullable: true),
+                    TargetUserId = table.Column<Guid>(type: "RAW(16)", nullable: true),
+                    TargetLibraryId = table.Column<Guid>(type: "RAW(16)", nullable: true),
+                    TargetAccountId = table.Column<Guid>(type: "RAW(16)", nullable: true),
+                    PreviousValue = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    NewValue = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
+                    Time = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Activities", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Activities_Accounts_TargetAccountId",
+                        column: x => x.TargetAccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Activities_AspNetUsers_InstigatorId",
+                        column: x => x.InstigatorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Activities_AspNetUsers_TargetUserId",
+                        column: x => x.TargetUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Activities_Libraries_TargetLibraryId",
+                        column: x => x.TargetLibraryId,
+                        principalTable: "Libraries",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Hashtags",
                 columns: table => new
                 {
@@ -310,6 +349,26 @@ namespace Steamfinity.Cloud.Migrations
                 name: "IX_Accounts_SteamId",
                 table: "Accounts",
                 column: "SteamId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Activities_InstigatorId",
+                table: "Activities",
+                column: "InstigatorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Activities_TargetAccountId",
+                table: "Activities",
+                column: "TargetAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Activities_TargetLibraryId",
+                table: "Activities",
+                column: "TargetLibraryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Activities_TargetUserId",
+                table: "Activities",
+                column: "TargetUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -366,6 +425,9 @@ namespace Steamfinity.Cloud.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AccountInteractions");
+
+            migrationBuilder.DropTable(
+                name: "Activities");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");

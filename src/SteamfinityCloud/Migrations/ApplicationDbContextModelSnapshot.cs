@@ -273,6 +273,50 @@ namespace Steamfinity.Cloud.Migrations
                     b.ToTable("AccountInteractions");
                 });
 
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.Activity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid?>("InstigatorId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("PreviousValue")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<Guid?>("TargetAccountId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid?>("TargetLibraryId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid?>("TargetUserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTimeOffset>("Time")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstigatorId");
+
+                    b.HasIndex("TargetAccountId");
+
+                    b.HasIndex("TargetLibraryId");
+
+                    b.HasIndex("TargetUserId");
+
+                    b.ToTable("Activities");
+                });
+
             modelBuilder.Entity("Steamfinity.Cloud.Entities.ApplicationRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -511,6 +555,33 @@ namespace Steamfinity.Cloud.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Steamfinity.Cloud.Entities.Activity", b =>
+                {
+                    b.HasOne("Steamfinity.Cloud.Entities.ApplicationUser", "Instigator")
+                        .WithMany("InstigatedActivities")
+                        .HasForeignKey("InstigatorId");
+
+                    b.HasOne("Steamfinity.Cloud.Entities.Account", "TargetAccount")
+                        .WithMany("Activities")
+                        .HasForeignKey("TargetAccountId");
+
+                    b.HasOne("Steamfinity.Cloud.Entities.Library", "TargetLibrary")
+                        .WithMany("Activities")
+                        .HasForeignKey("TargetLibraryId");
+
+                    b.HasOne("Steamfinity.Cloud.Entities.ApplicationUser", "TargetUser")
+                        .WithMany("AffectingActivities")
+                        .HasForeignKey("TargetUserId");
+
+                    b.Navigation("Instigator");
+
+                    b.Navigation("TargetAccount");
+
+                    b.Navigation("TargetLibrary");
+
+                    b.Navigation("TargetUser");
+                });
+
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Hashtag", b =>
                 {
                     b.HasOne("Steamfinity.Cloud.Entities.Account", "Account")
@@ -543,6 +614,8 @@ namespace Steamfinity.Cloud.Migrations
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Account", b =>
                 {
+                    b.Navigation("Activities");
+
                     b.Navigation("Hashtags");
 
                     b.Navigation("Interactions");
@@ -552,12 +625,18 @@ namespace Steamfinity.Cloud.Migrations
                 {
                     b.Navigation("AccountInteractions");
 
+                    b.Navigation("AffectingActivities");
+
+                    b.Navigation("InstigatedActivities");
+
                     b.Navigation("Memberships");
                 });
 
             modelBuilder.Entity("Steamfinity.Cloud.Entities.Library", b =>
                 {
                     b.Navigation("Accounts");
+
+                    b.Navigation("Activities");
 
                     b.Navigation("Memberships");
                 });
