@@ -514,7 +514,7 @@ public sealed class AccountsController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> DeleteAccountAsync(Guid accountId)
+    public async Task<IActionResult> RemoveAccountAsync(Guid accountId)
     {
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
@@ -527,7 +527,7 @@ public sealed class AccountsController : SteamfinityController
             return NoAccountManagementPermissionsError();
         }
 
-        await _accountManager.DeleteAsync(account);
+        await _accountManager.RemoveAsync(account);
         await _auditLog.LogAccountRemoval(UserId, account.LibraryId, account.Id);
 
         return NoContent();

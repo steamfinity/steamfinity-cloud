@@ -101,7 +101,7 @@ public sealed class AccountManager : IAccountManager
         _ = await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(Account account)
+    public async Task RemoveAsync(Account account)
     {
         ArgumentNullException.ThrowIfNull(account, nameof(account));
 

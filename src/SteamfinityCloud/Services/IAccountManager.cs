@@ -17,5 +17,5 @@ public interface IAccountManager
 
     Task UpdateAsync(Account account);
 
-    Task DeleteAsync(Account account);
+    Task RemoveAsync(Account account);
 }
