@@ -494,6 +494,42 @@ public sealed class UsersController : SteamfinityController
         return NoContent();
     }
 
+    [HttpPatch("{userId}/is-suspended")]
+    [Authorize(PolicyNames.Administrators)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangeUserSuspensionAsync(Guid userId, UserSuspensionChangeRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            return UserNotFoundError();
+        }
+
+        var previousIsSuspended = user.IsSuspended;
+        if (request.NewIsSuspended == previousIsSuspended)
+        {
+            return NoContent();
+        }
+
+        user.IsSuspended = request.NewIsSuspended;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errorCode = result.Errors.First().Code;
+            throw new IdentityException(errorCode);
+        }
+
+        await _auditLog.LogUserSuspensionChangeAsync(UserId, user.Id, previousIsSuspended, user.IsSuspended);
+        return NoContent();
+    }
+
     [HttpDelete("{userId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
