@@ -5,6 +5,7 @@ using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Models;
+using Steamfinity.Cloud.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -18,15 +19,18 @@ public sealed class AuthenticationController : SteamfinityController
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IConfiguration _configuration;
+    private readonly IAuditLog _auditLog;
 
     public AuthenticationController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IAuditLog auditLog)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
     }
 
     [HttpPost("sign-up")]
@@ -91,6 +95,7 @@ public sealed class AuthenticationController : SteamfinityController
             await AddUserToRoleAsync(user, RoleNames.Administrator);
         }
 
+        await _auditLog.LogUserSignUpAsync(user.Id);
         return NoContent();
     }
 
@@ -143,6 +148,7 @@ public sealed class AuthenticationController : SteamfinityController
             RefreshToken = refreshToken
         };
 
+        await _auditLog.LogUserSignInAsync(user.Id);
         return Ok(tokenDetails);
     }
 
@@ -183,6 +189,7 @@ public sealed class AuthenticationController : SteamfinityController
             Roles = roles
         };
 
+        await _auditLog.LogTokenRefreshAsync(user.Id);
         return Ok(tokenDetails);
     }
 

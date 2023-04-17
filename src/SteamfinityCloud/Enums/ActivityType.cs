@@ -1,0 +1,35 @@
+﻿namespace Steamfinity.Cloud.Enums;
+
+public enum ActivityType
+{
+    TokenRefresh,
+    UserSignUp,
+    UserSignIn,
+    UserNameChange,
+    UserPasswordChange,
+    UserRoleAddition,
+    UserRoleRemoval,
+    UserSuspensionChange,
+    UserDeletion,
+    LibraryCreation,
+    LibraryNameChange,
+    LibraryDescriptionChange,
+    LibraryDeletion,
+    MemberAddition,
+    MemberRoleChange,
+    MemberRemoval,
+    AccountAddition,
+    AccountSignIn,
+    AccountNameChange,
+    AccountPasswordChange,
+    AliasChange,
+    PrimeStatusChange,
+    SkillGroupChange,
+    CooldownExpirationTimeChange,
+    LaunchParametersChange,
+    NotesChange,
+    HashtagsChange,
+    OutgoingAccountTransfer,
+    IncomingAccountTransfer,
+    AccountRemoval
+}

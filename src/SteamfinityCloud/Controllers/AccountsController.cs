@@ -17,17 +17,20 @@ public sealed class AccountsController : SteamfinityController
     private readonly IPermissionManager _permissionManager;
     private readonly IAccountManager _accountManager;
     private readonly IAccountInteractionManager _accountInteractionManager;
+    private readonly IAuditLog _auditLog;
     private readonly ISteamApi _steamApi;
 
     public AccountsController(
         IPermissionManager permissionManager,
         IAccountManager accountManager,
         IAccountInteractionManager accountInteractionManager,
+        IAuditLog auditLog,
         ISteamApi steamApi)
     {
         _permissionManager = permissionManager ?? throw new ArgumentNullException(nameof(permissionManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
+        _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
         _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
     }
 
@@ -52,7 +55,7 @@ public sealed class AccountsController : SteamfinityController
 
         if (refreshAccount)
         {
-            await _steamApi.TryRefreshAccountAsync(account);
+            _ = await _steamApi.TryRefreshAccountAsync(account);
         }
 
         if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(account.LibraryId, UserId))
@@ -119,11 +122,14 @@ public sealed class AccountsController : SteamfinityController
             return NoAccountManagementPermissionsError();
         }
 
+        var previousAccountName = account.AccountName;
+
         account.AccountName = request.NewAccountName;
         account.OptimizedAccountName = request.NewAccountName?.OptimizeForSearch();
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogAccountNameChangeAsync(UserId, account.Id, previousAccountName, account.AccountName);
 
         return NoContent();
     }
@@ -153,6 +159,7 @@ public sealed class AccountsController : SteamfinityController
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogAccountPasswordChangeAsync(UserId, account.Id);
 
         return NoContent();
     }
@@ -178,11 +185,14 @@ public sealed class AccountsController : SteamfinityController
             return NoAccountManagementPermissionsError();
         }
 
+        var previousAlias = account.Alias;
+
         account.Alias = request.NewAlias;
         account.OptimizedAlias = request.NewAlias?.OptimizeForSearch();
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogAliasChangeAsync(UserId, account.Id, previousAlias, account.Alias);
 
         return NoContent();
     }
@@ -268,10 +278,13 @@ public sealed class AccountsController : SteamfinityController
             return NoAccountManagementPermissionsError();
         }
 
+        var hadPrimeStatus = account.HasPrimeStatus;
+
         account.HasPrimeStatus = request.NewHasPrimeStatus;
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogPrimeStatusChangeAsync(UserId, account.Id, hadPrimeStatus, account.HasPrimeStatus);
 
         return NoContent();
     }
@@ -297,10 +310,13 @@ public sealed class AccountsController : SteamfinityController
             return NoAccountManagementPermissionsError();
         }
 
+        var previousSkillGroup = account.SkillGroup;
+
         account.SkillGroup = request.NewSkillGroup;
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogSkillGroupChangeAsync(UserId, account.Id, previousSkillGroup, account.SkillGroup);
 
         return NoContent();
     }
@@ -326,10 +342,13 @@ public sealed class AccountsController : SteamfinityController
             return NoAccountManagementPermissionsError();
         }
 
+        var previousTime = account.CooldownExpirationTime;
+
         account.CooldownExpirationTime = request.NewCooldownExpirationTime;
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogCooldownExpirationTimeChangeAsync(UserId, account.Id, previousTime, account.CooldownExpirationTime);
 
         return NoContent();
     }
@@ -360,6 +379,7 @@ public sealed class AccountsController : SteamfinityController
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogLaunchParametersChangeAsync(UserId, account.Id);
 
         return NoContent();
     }
@@ -390,6 +410,7 @@ public sealed class AccountsController : SteamfinityController
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogNotesChangeAsync(UserId, account.Id);
 
         return NoContent();
     }
@@ -434,7 +455,9 @@ public sealed class AccountsController : SteamfinityController
         }
 
         account.LastEditTime = DateTimeOffset.UtcNow;
+
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogHashtagsChangeAsync(UserId, account.Id);
 
         return NoContent();
     }
@@ -454,6 +477,8 @@ public sealed class AccountsController : SteamfinityController
         {
             return AccountNotFoundError();
         }
+
+        var previousLibraryId = account.LibraryId;
 
         // Ensure the user has permission to manage accounts in the current library:
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
@@ -477,6 +502,7 @@ public sealed class AccountsController : SteamfinityController
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
+        await _auditLog.LogAccountTransferAsync(UserId, account.Id, previousLibraryId, account.LibraryId);
 
         return NoContent();
     }
@@ -502,6 +528,8 @@ public sealed class AccountsController : SteamfinityController
         }
 
         await _accountManager.DeleteAsync(account);
+        await _auditLog.LogAccountRemoval(UserId, account.LibraryId, account.Id);
+
         return NoContent();
     }
 

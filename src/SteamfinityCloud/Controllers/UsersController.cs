@@ -8,6 +8,7 @@ using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Extensions;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
+using System.Data;
 
 namespace Steamfinity.Cloud.Controllers;
 
@@ -21,6 +22,7 @@ public sealed class UsersController : SteamfinityController
     private readonly IMembershipManager _membershipManager;
     private readonly IAccountManager _accountManager;
     private readonly IAccountInteractionManager _accountInteractionManager;
+    private readonly IAuditLog _auditLog;
     private readonly ISteamApi _steamApi;
 
     public UsersController(
@@ -29,6 +31,7 @@ public sealed class UsersController : SteamfinityController
         IMembershipManager membershipManager,
         IAccountManager accountManager,
         IAccountInteractionManager accountInteractionManager,
+        IAuditLog auditLog,
         ISteamApi steamApi)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -36,6 +39,7 @@ public sealed class UsersController : SteamfinityController
         _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
+        _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
         _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
     }
 
@@ -326,7 +330,9 @@ public sealed class UsersController : SteamfinityController
             return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to change other user's name.");
         }
 
+        var previousName = user.UserName;
         var result = await _userManager.SetUserNameAsync(user, request.NewUserName);
+
         if (!result.Succeeded)
         {
             var errorCode = result.Errors.First().Code;
@@ -344,6 +350,7 @@ public sealed class UsersController : SteamfinityController
             throw new IdentityException(errorCode);
         }
 
+        await _auditLog.LogUserNameChangeAsync(UserId, user.Id, previousName!, user.UserName!);
         return NoContent();
     }
 
@@ -403,6 +410,7 @@ public sealed class UsersController : SteamfinityController
             throw new IdentityException(errorCode);
         }
 
+        await _auditLog.LogUserPasswordChangeAsync(UserId, user.Id);
         return NoContent();
     }
 
@@ -424,7 +432,8 @@ public sealed class UsersController : SteamfinityController
             return UserNotFoundError();
         }
 
-        if (await _roleManager.FindByNameAsync(request.RoleName) == null)
+        var role = await _roleManager.FindByNameAsync(request.RoleName);
+        if (role == null)
         {
             return ApiError(StatusCodes.Status404NotFound, "ROLE_NOT_FOUND", "There is no role with this name.");
         }
@@ -441,6 +450,7 @@ public sealed class UsersController : SteamfinityController
             throw new IdentityException(errorCode);
         }
 
+        await _auditLog.LogUserRoleAddition(UserId, user.Id, role.Name ?? role.Id.ToString());
         return NoContent();
     }
 
@@ -462,7 +472,8 @@ public sealed class UsersController : SteamfinityController
             return UserNotFoundError();
         }
 
-        if (await _roleManager.FindByNameAsync(roleName) == null)
+        var role = await _roleManager.FindByNameAsync(roleName);
+        if (role == null)
         {
             return ApiError(StatusCodes.Status404NotFound, "ROLE_NOT_FOUND", "There is no role with this name.");
         }
@@ -479,6 +490,7 @@ public sealed class UsersController : SteamfinityController
             throw new IdentityException(errorCode);
         }
 
+        await _auditLog.LogUserRoleRemoval(UserId, user.Id, role.Name ?? role.Id.ToString());
         return NoContent();
     }
 
@@ -516,6 +528,7 @@ public sealed class UsersController : SteamfinityController
             throw new IdentityException(errorCode);
         }
 
+        await _auditLog.LogUserDeletionAsync(UserId, user.Id);
         return NoContent();
     }
 

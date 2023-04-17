@@ -13,4 +13,6 @@ public sealed class Library
     public ICollection<Membership> Memberships { get; } = null!;
 
     public ICollection<Account> Accounts { get; } = null!;
+
+    public ICollection<Activity> Activities { get; } = null!;
 }

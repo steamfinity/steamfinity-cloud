@@ -20,6 +20,7 @@ public sealed class LibrariesController : SteamfinityController
     private readonly IMembershipManager _membershipManager;
     private readonly IPermissionManager _permissionManager;
     private readonly IAccountManager _accountManager;
+    private readonly IAuditLog _auditLog;
     private readonly ISteamApi _steamApi;
 
     public LibrariesController(
@@ -27,12 +28,14 @@ public sealed class LibrariesController : SteamfinityController
         IMembershipManager membershipManager,
         IPermissionManager permissionManager,
         IAccountManager accountManager,
+        IAuditLog auditLog,
         ISteamApi steamApi)
     {
         _libraryManager = libraryManager ?? throw new ArgumentNullException(nameof(libraryManager));
         _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
         _permissionManager = permissionManager ?? throw new ArgumentNullException(nameof(permissionManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
+        _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
         _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
     }
 
@@ -88,6 +91,7 @@ public sealed class LibrariesController : SteamfinityController
             Name = library.Name
         };
 
+        await _auditLog.LogLibraryCreationAsync(UserId, library.Id);
         return CreatedAtAction("GetLibrary", new { LibraryId = library.Id }, overview);
     }
 
@@ -144,8 +148,11 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage this library.");
         }
 
+        var previousLibraryName = library.Name;
         library.Name = request.NewName;
+
         await _libraryManager.UpdateAsync(library);
+        await _auditLog.LogLibraryNameChangeAsync(UserId, libraryId, previousLibraryName, library.Name);
 
         return NoContent();
     }
@@ -173,7 +180,9 @@ public sealed class LibrariesController : SteamfinityController
         }
 
         library.Description = request.NewDescription;
+
         await _libraryManager.UpdateAsync(library);
+        await _auditLog.LogLibraryDescriptionChangeAsync(UserId, libraryId);
 
         return NoContent();
     }
@@ -258,6 +267,7 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status403Forbidden, "MEMBER_LIMIT_EXCEEDED", "This library already has the maximum number of members.");
         }
 
+        await _auditLog.LogMemberAdditionAsync(UserId, libraryId, request.UserId);
         return NoContent();
     }
 
@@ -282,6 +292,7 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage users in this library.");
         }
 
+        var previousRole = (await _membershipManager.FindByIdAsync(libraryId, userId))?.Role;
         var result = await _membershipManager.ChangeMemberRoleAsync(libraryId, userId, request.NewRole);
 
         if (result == MemberRoleChangeResult.LibraryNotFound)
@@ -299,6 +310,7 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status400BadRequest, "USER_NOT_MEMBER", "This user is not a member of the library.");
         }
 
+        await _auditLog.LogMemberRoleChangeAsync(UserId, libraryId, userId, previousRole!.Value, request.NewRole);
         return NoContent();
     }
 
@@ -338,6 +350,7 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status400BadRequest, "USER_NOT_MEMBER", "This user is not a member of the library.");
         }
 
+        await _auditLog.LogMemberRemovalAsync(UserId, libraryId, userId);
         return NoContent();
     }
 
@@ -443,6 +456,7 @@ public sealed class LibrariesController : SteamfinityController
             AvatarUrl = account.AvatarUrl
         };
 
+        await _auditLog.LogAccountAdditionAsync(UserId, libraryId, account.Id);
         return CreatedAtAction("GetAccount", "Accounts", new { AccountId = account.Id }, overview);
     }
 
@@ -467,6 +481,8 @@ public sealed class LibrariesController : SteamfinityController
         }
 
         await _libraryManager.DeleteAsync(library);
+        await _auditLog.LogLibraryDeletionAsync(UserId, libraryId);
+
         return NoContent();
     }
 

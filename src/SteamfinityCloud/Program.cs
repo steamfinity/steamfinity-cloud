@@ -23,6 +23,7 @@ builder.Services.AddScoped<IPermissionManager, PermissionManager>();
 builder.Services.AddScoped<IAccountManager, AccountManager>();
 builder.Services.AddScoped<IAccountInteractionManager, AccountInteractionManager>();
 builder.Services.AddScoped<ILimitProvider, LimitProvider>();
+builder.Services.AddScoped<IAuditLog, AuditLog>();
 
 builder.Services.AddScoped<ISteamApi, SteamApi>();
 builder.Services.AddHttpClient<ISteamApi, SteamApi>(client => client.BaseAddress = new Uri("https://api.steampowered.com"));

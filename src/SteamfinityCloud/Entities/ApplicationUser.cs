@@ -13,4 +13,8 @@ public sealed class ApplicationUser : IdentityUser<Guid>
     public ICollection<Membership> Memberships { get; } = null!;
 
     public ICollection<AccountInteraction> AccountInteractions { get; } = null!;
+
+    public ICollection<Activity> InstigatedActivities { get; } = null!;
+
+    public ICollection<Activity> AffectingActivities { get; } = null!;
 }

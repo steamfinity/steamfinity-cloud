@@ -89,4 +89,6 @@ public sealed class Account
     public ICollection<Hashtag> Hashtags { get; } = null!;
 
     public ICollection<AccountInteraction> Interactions { get; } = null!;
+
+    public ICollection<Activity> Activities { get; } = null!;
 }
