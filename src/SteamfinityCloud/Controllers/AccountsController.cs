@@ -101,6 +101,39 @@ public sealed class AccountsController : SteamfinityController
         return Ok(details);
     }
 
+    [HttpGet("{accountId}/password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<AccountPasswordDetails>> GetPasswordAsync(Guid accountId, bool logSignIn = false)
+    {
+        var account = await _accountManager.FindByIdAsync(accountId);
+        if (account == null)
+        {
+            return AccountNotFoundError();
+        }
+
+        if (!IsAdministrator && !await _permissionManager.CanViewPasswordsAsync(account.LibraryId, UserId))
+        {
+            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to view account passwords in this library.");
+        }
+
+        if (logSignIn)
+        {
+            await _auditLog.LogAccountSignInAsync(UserId, account.LibraryId);
+        }
+
+        var passwordDetails = new AccountPasswordDetails
+        {
+            Password = account.Password
+        };
+
+        return Ok(passwordDetails);
+    }
+
     [HttpPatch("{accountId}/account-name")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

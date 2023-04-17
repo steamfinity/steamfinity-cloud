@@ -31,6 +31,11 @@ public sealed class PermissionManager : IPermissionManager
         return await GetMemberRoleAsync(libraryId, userId) >= MemberRole.Member;
     }
 
+    public async Task<bool> CanViewPasswordsAsync(Guid libraryId, Guid userId)
+    {
+        return await GetMemberRoleAsync(libraryId, userId) >= MemberRole.Member;
+    }
+
     private async Task<MemberRole?> GetMemberRoleAsync(Guid libraryId, Guid userId)
     {
         return (await _membershipManager.FindByIdAsync(libraryId, userId))?.Role;

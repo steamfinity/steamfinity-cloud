@@ -9,4 +9,6 @@ public interface IPermissionManager
     Task<bool> CanManageMembersAsync(Guid libraryId, Guid userId);
 
     Task<bool> CanManageAccountsAsync(Guid libraryId, Guid userId);
+
+    Task<bool> CanViewPasswordsAsync(Guid libraryId, Guid userId);
 }
