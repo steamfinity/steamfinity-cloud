@@ -156,6 +156,10 @@ public sealed class AccountsController : SteamfinityController
         }
 
         var previousAccountName = account.AccountName;
+        if (request.NewAccountName == previousAccountName)
+        {
+            return NoContent();
+        }
 
         account.AccountName = request.NewAccountName;
         account.OptimizedAccountName = request.NewAccountName?.OptimizeForSearch();
@@ -219,6 +223,10 @@ public sealed class AccountsController : SteamfinityController
         }
 
         var previousAlias = account.Alias;
+        if (request.NewAlias == previousAlias)
+        {
+            return NoContent();
+        }
 
         account.Alias = request.NewAlias;
         account.OptimizedAlias = request.NewAlias?.OptimizeForSearch();
@@ -282,6 +290,11 @@ public sealed class AccountsController : SteamfinityController
             return NoAccountManagementPermissionsError();
         }
 
+        if (request.NewColor == account.Color)
+        {
+            return NoContent();
+        }
+
         account.Color = request.NewColor;
         account.LastEditTime = DateTimeOffset.UtcNow;
 
@@ -311,13 +324,17 @@ public sealed class AccountsController : SteamfinityController
             return NoAccountManagementPermissionsError();
         }
 
-        var hadPrimeStatus = account.HasPrimeStatus;
+        var previosHasPrimeStatus = account.HasPrimeStatus;
+        if (request.NewHasPrimeStatus == previosHasPrimeStatus)
+        {
+            return NoContent();
+        }
 
         account.HasPrimeStatus = request.NewHasPrimeStatus;
         account.LastEditTime = DateTimeOffset.UtcNow;
 
         await _accountManager.UpdateAsync(account);
-        await _auditLog.LogPrimeStatusChangeAsync(UserId, account.Id, hadPrimeStatus, account.HasPrimeStatus);
+        await _auditLog.LogPrimeStatusChangeAsync(UserId, account.Id, previosHasPrimeStatus, account.HasPrimeStatus);
 
         return NoContent();
     }
@@ -344,6 +361,10 @@ public sealed class AccountsController : SteamfinityController
         }
 
         var previousSkillGroup = account.SkillGroup;
+        if (request.NewSkillGroup == previousSkillGroup)
+        {
+            return NoContent();
+        }
 
         account.SkillGroup = request.NewSkillGroup;
         account.LastEditTime = DateTimeOffset.UtcNow;
@@ -376,6 +397,10 @@ public sealed class AccountsController : SteamfinityController
         }
 
         var previousTime = account.CooldownExpirationTime;
+        if (request.NewCooldownExpirationTime == previousTime)
+        {
+            return NoContent();
+        }
 
         account.CooldownExpirationTime = request.NewCooldownExpirationTime;
         account.LastEditTime = DateTimeOffset.UtcNow;
@@ -407,6 +432,11 @@ public sealed class AccountsController : SteamfinityController
             return NoAccountManagementPermissionsError();
         }
 
+        if (request.NewLaunchParameters == account.LaunchParameters)
+        {
+            return NoContent();
+        }
+
         account.LaunchParameters = request.NewLaunchParameters;
         account.OptimizedLaunchParameters = request.NewLaunchParameters?.OptimizeForSearch();
         account.LastEditTime = DateTimeOffset.UtcNow;
@@ -436,6 +466,11 @@ public sealed class AccountsController : SteamfinityController
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
             return NoAccountManagementPermissionsError();
+        }
+
+        if (request.NewNotes == account.Notes)
+        {
+            return NoContent();
         }
 
         account.Notes = request.NewNotes;

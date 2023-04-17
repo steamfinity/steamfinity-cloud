@@ -148,11 +148,16 @@ public sealed class LibrariesController : SteamfinityController
             return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage this library.");
         }
 
-        var previousLibraryName = library.Name;
+        var previosName = library.Name;
+        if (request.NewName == previosName)
+        {
+            return NoContent();
+        }
+
         library.Name = request.NewName;
 
         await _libraryManager.UpdateAsync(library);
-        await _auditLog.LogLibraryNameChangeAsync(UserId, libraryId, previousLibraryName, library.Name);
+        await _auditLog.LogLibraryNameChangeAsync(UserId, libraryId, previosName, library.Name);
 
         return NoContent();
     }
@@ -177,6 +182,11 @@ public sealed class LibrariesController : SteamfinityController
         if (!IsAdministrator && !await _permissionManager.CanManageLibrary(libraryId, UserId))
         {
             return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage this library.");
+        }
+
+        if (request.NewDescription == library.Description)
+        {
+            return NoContent();
         }
 
         library.Description = request.NewDescription;

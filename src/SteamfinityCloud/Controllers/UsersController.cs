@@ -330,9 +330,13 @@ public sealed class UsersController : SteamfinityController
             return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to change other user's name.");
         }
 
-        var previousName = user.UserName;
-        var result = await _userManager.SetUserNameAsync(user, request.NewUserName);
+        var previousUserName = user.UserName;
+        if (request.NewUserName == previousUserName)
+        {
+            return NoContent();
+        }
 
+        var result = await _userManager.SetUserNameAsync(user, request.NewUserName);
         if (!result.Succeeded)
         {
             var errorCode = result.Errors.First().Code;
@@ -350,7 +354,7 @@ public sealed class UsersController : SteamfinityController
             throw new IdentityException(errorCode);
         }
 
-        await _auditLog.LogUserNameChangeAsync(UserId, user.Id, previousName!, user.UserName!);
+        await _auditLog.LogUserNameChangeAsync(UserId, user.Id, previousUserName!, user.UserName!);
         return NoContent();
     }
 
