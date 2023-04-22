@@ -13,12 +13,14 @@ namespace Steamfinity.Cloud.Services;
 
 public sealed partial class SteamApi : ISteamApi
 {
+    private readonly ApplicationDbContext _context;
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly string _steamApiKey;
 
-    public SteamApi(HttpClient httpClient, IConfiguration configuration)
+    public SteamApi(ApplicationDbContext context, HttpClient httpClient, IConfiguration configuration)
     {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _steamApiKey = _configuration["SteamApiKey"] ?? throw new ConfigurationMissingException("SteamApiKey");
@@ -194,6 +196,8 @@ public sealed partial class SteamApi : ISteamApi
         {
             await ProcessBansDocumentAsync(accounts, await bansDocumentTask);
         }
+
+        await _context.SaveChangesAsync();
     }
 
     private static bool TryProcessSummaryDocument(Account account, JsonDocument document)
