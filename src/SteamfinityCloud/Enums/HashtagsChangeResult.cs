@@ -1,9 +1,8 @@
 ﻿namespace Steamfinity.Cloud.Enums;
 
-public enum HashtagsSetResult
+public enum HashtagsChangeResult
 {
     Success,
-    AccountNotFound,
     HashtagLimitExceeded,
     InvalidHashtags
 }

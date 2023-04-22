@@ -40,16 +40,4 @@ public class SteamfinityController : ControllerBase
             return _isAdministrator.Value;
         }
     }
-
-    [NonAction]
-    public static ObjectResult ApiError(int statusCode, string errorCode, string? errorMessage = null)
-    {
-        var apiError = new ApiError(errorCode, errorMessage);
-        var result = new ObjectResult(apiError)
-        {
-            StatusCode = statusCode
-        };
-
-        return result;
-    }
 }

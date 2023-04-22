@@ -68,9 +68,11 @@ public sealed class Account
 
     public DateTimeOffset AdditionTime { get; init; } = DateTimeOffset.UtcNow;
 
+    public DateTimeOffset? LastUpdateTime { get; set; }
+
     public DateTimeOffset? LastEditTime { get; set; }
 
-    public DateTimeOffset? LastUpdateTime { get; set; }
+    public DateTimeOffset? LastRefreshTime { get; set; }
 
     public DateTimeOffset? CooldownExpirationTime { get; set; }
 

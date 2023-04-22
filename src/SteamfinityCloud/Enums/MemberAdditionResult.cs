@@ -3,9 +3,6 @@
 public enum MemberAdditionResult
 {
     Success,
-    LibraryNotFound,
-    UserNotFound,
-    MemberAlreadyAdded,
-    MemberLimitExceeded,
-    LibraryLimitExceeded
+    LibraryLimitExceeded,
+    MemberLimitExceeded
 }

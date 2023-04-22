@@ -13,9 +13,29 @@ public interface IAccountManager
 
     Task<AccountAdditionResult> AddAsync(Account account);
 
-    Task<HashtagsSetResult> SetHashtagsAsync(Account account, IEnumerable<string> hashtags);
+    Task ChangeAccountNameAsync(Account account, string? newAccountName);
 
-    Task UpdateAsync(Account account);
+    Task ChangePasswordAsync(Account account, string? newPassword);
+
+    Task ChangeAliasAsync(Account account, string? newAlias);
+
+    Task ChangeColorAsync(Account account, SimpleColor newColor);
+
+    Task ChangePrimeStatusAsync(Account account, bool newPrimeStatus);
+
+    Task ChangeSkillGroupAsync(Account account, SkillGroup newSkillGroup);
+
+    Task ChangeCooldownExpirationTimeAsync(Account account, DateTimeOffset newCooldownExpirationTime);
+
+    Task ChangeLaunchParametersAsync(Account account, string? newLaunchParameters);
+
+    Task ChangeNotesAsync(Account account, string? newNotes);
+
+    Task<HashtagsChangeResult> ChangeHashtagsAsync(Account account, IEnumerable<string> hashtags);
+
+    Task<TransferResult> TransferAsync(Account account, Guid newLibraryId);
+
+    Task UpdateAsync(Account account, AccountUpdateType updateType = AccountUpdateType.Default);
 
     Task RemoveAsync(Account account);
 }

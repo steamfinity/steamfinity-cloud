@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Constants;
+using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
-using Steamfinity.Cloud.Extensions;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
+using Steamfinity.Cloud.Utilities;
 
 namespace Steamfinity.Cloud.Controllers;
 
@@ -14,6 +16,8 @@ namespace Steamfinity.Cloud.Controllers;
 [Authorize(PolicyNames.Users)]
 public sealed class AccountsController : SteamfinityController
 {
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ILibraryManager _libraryManager;
     private readonly IPermissionManager _permissionManager;
     private readonly IAccountManager _accountManager;
     private readonly IAccountInteractionManager _accountInteractionManager;
@@ -21,12 +25,16 @@ public sealed class AccountsController : SteamfinityController
     private readonly ISteamApi _steamApi;
 
     public AccountsController(
+        UserManager<ApplicationUser> userManager,
+        ILibraryManager libraryManager,
         IPermissionManager permissionManager,
         IAccountManager accountManager,
         IAccountInteractionManager accountInteractionManager,
         IAuditLog auditLog,
         ISteamApi steamApi)
     {
+        _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+        _libraryManager = libraryManager ?? throw new ArgumentNullException(nameof(libraryManager));
         _permissionManager = permissionManager ?? throw new ArgumentNullException(nameof(permissionManager));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountInteractionManager = accountInteractionManager ?? throw new ArgumentNullException(nameof(accountInteractionManager));
@@ -50,7 +58,7 @@ public sealed class AccountsController : SteamfinityController
 
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (refreshAccount)
@@ -60,10 +68,10 @@ public sealed class AccountsController : SteamfinityController
 
         if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(account.LibraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of the library that holds the account.");
+            return CommonApiErrors.AccessDenied;
         }
 
-        var details = new AccountDetails
+        var accountDetails = new AccountDetails
         {
             Id = accountId,
             LibraryId = account.LibraryId,
@@ -98,7 +106,7 @@ public sealed class AccountsController : SteamfinityController
             Hashtags = account.Hashtags.Select(h => h.Name).AsEnumerable()
         };
 
-        return Ok(details);
+        return Ok(accountDetails);
     }
 
     [HttpGet("{accountId}/password")]
@@ -113,12 +121,12 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanViewPasswordsAsync(account.LibraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to view account passwords in this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
         if (logSignIn)
@@ -147,12 +155,12 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
         var previousAccountName = account.AccountName;
@@ -161,11 +169,7 @@ public sealed class AccountsController : SteamfinityController
             return NoContent();
         }
 
-        account.AccountName = request.NewAccountName;
-        account.OptimizedAccountName = request.NewAccountName?.OptimizeForSearch();
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
+        await _accountManager.ChangeAccountNameAsync(account, request.NewAccountName);
         await _auditLog.LogAccountNameChangeAsync(UserId, account.Id, previousAccountName, account.AccountName);
 
         return NoContent();
@@ -184,18 +188,15 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
-        account.Password = request.NewPassword;
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
+        await _accountManager.ChangePasswordAsync(account, request.NewPassword);
         await _auditLog.LogAccountPasswordChangeAsync(UserId, account.Id);
 
         return NoContent();
@@ -214,12 +215,12 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
         var previousAlias = account.Alias;
@@ -228,11 +229,7 @@ public sealed class AccountsController : SteamfinityController
             return NoContent();
         }
 
-        account.Alias = request.NewAlias;
-        account.OptimizedAlias = request.NewAlias?.OptimizeForSearch();
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
+        await _accountManager.ChangeAliasAsync(account, request.NewAlias);
         await _auditLog.LogAliasChangeAsync(UserId, account.Id, previousAlias, account.Alias);
 
         return NoContent();
@@ -251,21 +248,15 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
-        var result = await _accountInteractionManager.SetIsFavoriteAsync(account.Id, UserId, request.NewIsFavorite);
-
-        if (result == AccountIsFavoriteSetResult.AccountNotFound)
+        if (await _userManager.FindByIdAsync(UserId.ToString()) == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
-        if (result == AccountIsFavoriteSetResult.UserNotFound)
-        {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
-        }
-
+        await _accountInteractionManager.SetIsFavoriteAsync(account.Id, UserId, request.NewIsFavorite);
         return NoContent();
     }
 
@@ -282,12 +273,12 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
         if (request.NewColor == account.Color)
@@ -295,11 +286,7 @@ public sealed class AccountsController : SteamfinityController
             return NoContent();
         }
 
-        account.Color = request.NewColor;
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
-
+        await _accountManager.ChangeColorAsync(account, request.NewColor);
         return NoContent();
     }
 
@@ -316,12 +303,12 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
         var previosHasPrimeStatus = account.HasPrimeStatus;
@@ -330,10 +317,7 @@ public sealed class AccountsController : SteamfinityController
             return NoContent();
         }
 
-        account.HasPrimeStatus = request.NewHasPrimeStatus;
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
+        await _accountManager.ChangePrimeStatusAsync(account, request.NewHasPrimeStatus);
         await _auditLog.LogPrimeStatusChangeAsync(UserId, account.Id, previosHasPrimeStatus, account.HasPrimeStatus);
 
         return NoContent();
@@ -352,12 +336,12 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
         var previousSkillGroup = account.SkillGroup;
@@ -366,10 +350,7 @@ public sealed class AccountsController : SteamfinityController
             return NoContent();
         }
 
-        account.SkillGroup = request.NewSkillGroup;
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
+        await _accountManager.ChangeSkillGroupAsync(account, request.NewSkillGroup);
         await _auditLog.LogSkillGroupChangeAsync(UserId, account.Id, previousSkillGroup, account.SkillGroup);
 
         return NoContent();
@@ -388,12 +369,12 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
         var previousTime = account.CooldownExpirationTime;
@@ -402,10 +383,7 @@ public sealed class AccountsController : SteamfinityController
             return NoContent();
         }
 
-        account.CooldownExpirationTime = request.NewCooldownExpirationTime;
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
+        await _accountManager.ChangeCooldownExpirationTimeAsync(account, request.NewCooldownExpirationTime);
         await _auditLog.LogCooldownExpirationTimeChangeAsync(UserId, account.Id, previousTime, account.CooldownExpirationTime);
 
         return NoContent();
@@ -424,12 +402,12 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
         if (request.NewLaunchParameters == account.LaunchParameters)
@@ -437,11 +415,7 @@ public sealed class AccountsController : SteamfinityController
             return NoContent();
         }
 
-        account.LaunchParameters = request.NewLaunchParameters;
-        account.OptimizedLaunchParameters = request.NewLaunchParameters?.OptimizeForSearch();
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
+        await _accountManager.ChangeLaunchParametersAsync(account, request.NewLaunchParameters);
         await _auditLog.LogLaunchParametersChangeAsync(UserId, account.Id);
 
         return NoContent();
@@ -460,12 +434,12 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
         if (request.NewNotes == account.Notes)
@@ -473,11 +447,7 @@ public sealed class AccountsController : SteamfinityController
             return NoContent();
         }
 
-        account.Notes = request.NewNotes;
-        account.OptimizedNotes = request.NewNotes?.OptimizeForSearch();
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
+        await _accountManager.ChangeNotesAsync(account, request.NewNotes);
         await _auditLog.LogNotesChangeAsync(UserId, account.Id);
 
         return NoContent();
@@ -490,43 +460,34 @@ public sealed class AccountsController : SteamfinityController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> SetHashtagsAsync(Guid accountId, HashtagsSetRequest request)
+    public async Task<IActionResult> ChangeHashtagsAsync(Guid accountId, HashtagsChangeRequest request)
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage accounts in this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
-        var result = await _accountManager.SetHashtagsAsync(account, request.NewHashtags);
+        var result = await _accountManager.ChangeHashtagsAsync(account, request.NewHashtags);
 
-        if (result == HashtagsSetResult.AccountNotFound)
+        if (result == HashtagsChangeResult.HashtagLimitExceeded)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.HashtagLimitExceeded;
         }
 
-        if (result == HashtagsSetResult.HashtagLimitExceeded)
+        if (result == HashtagsChangeResult.InvalidHashtags)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "HASHTAG_LIMIT_EXCEEDED", "You are not allowed to add this number of hashtags.");
+            return CommonApiErrors.InvalidHashtags;
         }
 
-        if (result == HashtagsSetResult.InvalidHashtags)
-        {
-            return ApiError(StatusCodes.Status400BadRequest, "INVALID_HASHTAGS", "At least one of the provided hashtags is invalid.");
-        }
-
-        account.LastEditTime = DateTimeOffset.UtcNow;
-
-        await _accountManager.UpdateAsync(account);
         await _auditLog.LogHashtagsChangeAsync(UserId, account.Id);
-
         return NoContent();
     }
 
@@ -543,35 +504,43 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         var previousLibraryId = account.LibraryId;
 
-        // Ensure the user has permission to manage accounts in the current library:
+        if (!await _libraryManager.ExistsAsync(previousLibraryId))
+        {
+            return CommonApiErrors.LibraryNotFound;
+        }
+
+        if (!await _libraryManager.ExistsAsync(request.NewLibraryId))
+        {
+            return CommonApiErrors.LibraryNotFound;
+        }
+
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to transfer accounts from this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
-        // Ensure the user has permission to manage accounts in the new library:
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(request.NewLibraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to transfer accounts to this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
-        // Prevent the account from being moved to the same library it is currently in:
-        if (account.LibraryId == request.NewLibraryId)
+        if (previousLibraryId == request.NewLibraryId)
         {
-            return ApiError(StatusCodes.Status400BadRequest, "INVALID_OPERATION", "You cannot transfer an account to the same library that it is currently in.");
+            return CommonApiErrors.InvalidTransfer;
         }
 
-        account.LibraryId = request.NewLibraryId;
-        account.LastEditTime = DateTimeOffset.UtcNow;
+        var result = await _accountManager.TransferAsync(account, request.NewLibraryId);
+        if (result == TransferResult.AccountLimitExceeded)
+        {
+            return CommonApiErrors.AccountLimitExceeded;
+        }
 
-        await _accountManager.UpdateAsync(account);
         await _auditLog.LogAccountTransferAsync(UserId, account.Id, previousLibraryId, account.LibraryId);
-
         return NoContent();
     }
 
@@ -587,27 +556,17 @@ public sealed class AccountsController : SteamfinityController
         var account = await _accountManager.FindByIdAsync(accountId);
         if (account == null)
         {
-            return AccountNotFoundError();
+            return CommonApiErrors.AccountNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(account.LibraryId, UserId))
         {
-            return NoAccountManagementPermissionsError();
+            return CommonApiErrors.AccessDenied;
         }
 
         await _accountManager.RemoveAsync(account);
         await _auditLog.LogAccountRemoval(UserId, account.LibraryId, account.Id);
 
         return NoContent();
-    }
-
-    private static ObjectResult AccountNotFoundError()
-    {
-        return ApiError(StatusCodes.Status404NotFound, "ACCOUNT_NOT_FOUND", "There is no account with this identifier.");
-    }
-
-    private static ObjectResult NoAccountManagementPermissionsError()
-    {
-        return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage accounts in this library.");
     }
 }

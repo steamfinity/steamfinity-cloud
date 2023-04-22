@@ -2,6 +2,6 @@
 
 public static class PolicyNames
 {
-    public const string Users = "Users";
-    public const string Administrators = "Administrators";
+    public const string Users = nameof(Users);
+    public const string Administrators = nameof(Administrators);
 }

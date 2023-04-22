@@ -1,30 +1,27 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
+using Steamfinity.Cloud.Exceptions;
 
 namespace Steamfinity.Cloud.Services;
 
 public sealed class MembershipManager : IMembershipManager
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ILibraryManager _libraryManager;
     private readonly ILimitProvider _limitProvider;
 
-    public MembershipManager(
-        ApplicationDbContext context,
-        UserManager<ApplicationUser> userManager,
-        ILibraryManager libraryManager,
-        ILimitProvider limitProvider)
+    public MembershipManager(ApplicationDbContext context, ILimitProvider limitProvider)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-        _libraryManager = libraryManager ?? throw new ArgumentNullException(nameof(libraryManager));
         _limitProvider = limitProvider ?? throw new ArgumentNullException(nameof(limitProvider));
     }
 
     public IQueryable<Membership> Memberships => _context.Memberships;
+
+    public async Task<bool> ExistsAsync(Guid libraryId, Guid userId)
+    {
+        return await _context.Memberships.AnyAsync(m => m.LibraryId == libraryId && m.UserId == userId);
+    }
 
     public async Task<Membership?> FindByIdAsync(Guid libraryId, Guid userId)
     {
@@ -33,33 +30,24 @@ public sealed class MembershipManager : IMembershipManager
 
     public async Task<MemberAdditionResult> AddMemberAsync(Guid libraryId, Guid userId, MemberRole role)
     {
-        if (!await _libraryManager.ExistsAsync(libraryId))
-        {
-            return MemberAdditionResult.LibraryNotFound;
-        }
-
-        if (!await UserExistsAsync(userId))
-        {
-            return MemberAdditionResult.UserNotFound;
-        }
+        await ThrowIfLibraryNotExistsAsync(libraryId);
+        await ThrowIfUserNotExistsAsync(userId);
 
         if (await _context.Memberships.AnyAsync(m => m.LibraryId == libraryId && m.UserId == userId))
         {
-            return MemberAdditionResult.MemberAlreadyAdded;
+            return MemberAdditionResult.Success;
         }
 
-        // Ensure the library has not reached the user limit:
-        var currentMemberCount = await _context.Memberships.CountAsync(m => m.LibraryId == libraryId);
-        if (currentMemberCount >= _limitProvider.MaxMembersPerLibrary)
-        {
-            return MemberAdditionResult.MemberLimitExceeded;
-        }
-
-        // Ensure the user has not reached the library limit:
         var currentLibrariesCount = await _context.Memberships.CountAsync(m => m.UserId == userId);
         if (currentLibrariesCount >= _limitProvider.MaxLibrariesPerUser)
         {
             return MemberAdditionResult.LibraryLimitExceeded;
+        }
+
+        var currentMemberCount = await _context.Memberships.CountAsync(m => m.LibraryId == libraryId);
+        if (currentMemberCount >= _limitProvider.MaxMembersPerLibrary)
+        {
+            return MemberAdditionResult.MemberLimitExceeded;
         }
 
         var membership = new Membership
@@ -76,15 +64,8 @@ public sealed class MembershipManager : IMembershipManager
 
     public async Task<MemberRoleChangeResult> ChangeMemberRoleAsync(Guid libraryId, Guid userId, MemberRole role)
     {
-        if (!await _libraryManager.ExistsAsync(libraryId))
-        {
-            return MemberRoleChangeResult.LibraryNotFound;
-        }
-
-        if (!await UserExistsAsync(userId))
-        {
-            return MemberRoleChangeResult.UserNotFound;
-        }
+        await ThrowIfLibraryNotExistsAsync(libraryId);
+        await ThrowIfUserNotExistsAsync(userId);
 
         var membership = await FindByIdAsync(libraryId, userId);
         if (membership == null)
@@ -98,32 +79,32 @@ public sealed class MembershipManager : IMembershipManager
         return MemberRoleChangeResult.Success;
     }
 
-    public async Task<MemberRemovalResult> RemoveMemberAsync(Guid libraryId, Guid userId)
+    public async Task RemoveMemberAsync(Guid libraryId, Guid userId)
     {
-        if (!await _libraryManager.ExistsAsync(libraryId))
-        {
-            return MemberRemovalResult.LibraryNotFound;
-        }
-
-        if (!await UserExistsAsync(userId))
-        {
-            return MemberRemovalResult.UserNotFound;
-        }
+        await ThrowIfLibraryNotExistsAsync(libraryId);
+        await ThrowIfUserNotExistsAsync(userId);
 
         var membership = await FindByIdAsync(libraryId, userId);
-        if (membership == null)
+        if (membership != null)
         {
-            return MemberRemovalResult.UserNotMember;
+            _ = _context.Memberships.Remove(membership);
+            _ = await _context.SaveChangesAsync();
         }
-
-        _ = _context.Memberships.Remove(membership);
-        _ = await _context.SaveChangesAsync();
-
-        return MemberRemovalResult.Success;
     }
 
-    private async Task<bool> UserExistsAsync(Guid userId)
+    private async Task ThrowIfUserNotExistsAsync(Guid userId)
     {
-        return await _userManager.FindByIdAsync(userId.ToString()) != null;
+        if (!await _context.Users.AnyAsync(u => u.Id == userId))
+        {
+            throw new NotFoundException($"The user '{userId}' was not found in the database.");
+        }
+    }
+
+    private async Task ThrowIfLibraryNotExistsAsync(Guid libraryId)
+    {
+        if (!await _context.Libraries.AnyAsync(l => l.Id == libraryId))
+        {
+            throw new NotFoundException($"The library '{libraryId}' was not found in the database.");
+        }
     }
 }

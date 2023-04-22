@@ -2,7 +2,7 @@
 
 namespace Steamfinity.Cloud.Models;
 
-public sealed record HashtagsSetRequest
+public sealed record HashtagsChangeRequest
 {
     [Required]
     public required IEnumerable<string> NewHashtags { get; init; }

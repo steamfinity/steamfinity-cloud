@@ -1,7 +1,7 @@
 ﻿namespace Steamfinity.Cloud.Enums;
 
-public enum MemberRoleChangeResult
+public enum TransferResult
 {
     Success,
-    UserNotMember
+    AccountLimitExceeded
 }

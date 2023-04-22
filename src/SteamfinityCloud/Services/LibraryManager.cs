@@ -1,19 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
+using Steamfinity.Cloud.Exceptions;
 
 namespace Steamfinity.Cloud.Services;
 
 public sealed class LibraryManager : ILibraryManager
 {
     private readonly ApplicationDbContext _context;
+    private readonly IMembershipManager _membershipManager;
     private readonly ILimitProvider _limitProvider;
 
     public LibraryManager(
         ApplicationDbContext context,
+        IMembershipManager membershipManager,
         ILimitProvider limitProvider)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
         _limitProvider = limitProvider ?? throw new ArgumentNullException(nameof(limitProvider));
     }
 
@@ -32,8 +36,8 @@ public sealed class LibraryManager : ILibraryManager
     public async Task<LibraryCreationResult> CreateAsync(Library library, Guid ownerId)
     {
         ArgumentNullException.ThrowIfNull(library, nameof(library));
+        await ThrowIfUserNotExistsAsync(ownerId);
 
-        // Ensure the user has not reached the library limit:
         var currentNumberOfLibraries = await _context.Memberships.CountAsync(m => m.UserId == ownerId);
         if (currentNumberOfLibraries >= _limitProvider.MaxLibrariesPerUser)
         {
@@ -43,16 +47,11 @@ public sealed class LibraryManager : ILibraryManager
         _ = await _context.Libraries.AddAsync(library);
         _ = await _context.SaveChangesAsync();
 
-        // Create a membership for the owner of the library:
-        var ownerMembership = new Membership
+        var ownerAdditionResult = await _membershipManager.AddMemberAsync(library.Id, ownerId, MemberRole.Administrator);
+        if (ownerAdditionResult != MemberAdditionResult.Success)
         {
-            LibraryId = library.Id,
-            UserId = ownerId,
-            Role = MemberRole.Administrator
-        };
-
-        _ = await _context.Memberships.AddAsync(ownerMembership);
-        _ = await _context.SaveChangesAsync();
+            throw new InvalidOperationException($"The addition of the administrator resulted in: '{ownerAdditionResult}'.");
+        }
 
         return LibraryCreationResult.Success;
     }
@@ -60,6 +59,7 @@ public sealed class LibraryManager : ILibraryManager
     public async Task UpdateAsync(Library library)
     {
         ArgumentNullException.ThrowIfNull(library, nameof(library));
+        await ThrowIfLibraryNotExistsAsync(library.Id);
 
         _ = _context.Update(library);
         _ = await _context.SaveChangesAsync();
@@ -68,10 +68,25 @@ public sealed class LibraryManager : ILibraryManager
     public async Task DeleteAsync(Library library)
     {
         ArgumentNullException.ThrowIfNull(library, nameof(library));
+        await ThrowIfLibraryNotExistsAsync(library.Id);
 
-        _ = _context.Libraries.Attach(library);
         _ = _context.Libraries.Remove(library);
-
         _ = await _context.SaveChangesAsync();
+    }
+
+    private async Task ThrowIfLibraryNotExistsAsync(Guid libraryId)
+    {
+        if (!await ExistsAsync(libraryId))
+        {
+            throw new NotFoundException($"The library '{libraryId}' was not found in the database.");
+        }
+    }
+
+    private async Task ThrowIfUserNotExistsAsync(Guid userId)
+    {
+        if (!await _context.Users.AnyAsync(u => u.Id == userId))
+        {
+            throw new NotFoundException($"The user '{userId}' was not found in the database.");
+        }
     }
 }

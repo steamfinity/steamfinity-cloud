@@ -8,6 +8,7 @@ using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Extensions;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
+using Steamfinity.Cloud.Utilities;
 using System.Data;
 
 namespace Steamfinity.Cloud.Controllers;
@@ -78,7 +79,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByNameAsync(userName);
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundByName;
         }
 
         var result = new UserSearchResult
@@ -100,7 +101,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.CurrentUserNotFound;
         }
 
         var overview = CreateUserOverview(user);
@@ -118,7 +119,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.CurrentUserNotFound;
         }
 
         var details = await CreateUserDetailsAsync(user);
@@ -136,7 +137,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
         var overview = CreateUserOverview(user);
@@ -155,16 +156,16 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
-        if (userId != UserId && !IsAdministrator)
+        if (!IsAdministrator && userId != UserId)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to view other users' details.");
+            return CommonApiErrors.AccessDenied;
         }
 
-        var details = await CreateUserDetailsAsync(user);
-        return Ok(details);
+        var userDetails = await CreateUserDetailsAsync(user);
+        return Ok(userDetails);
     }
 
     [HttpGet("{userId}/accounts")]
@@ -182,12 +183,12 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
-        if (userId != UserId && !IsAdministrator)
+        if (!IsAdministrator && userId != UserId)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to view other users' accounts.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var authorizedLibraries = _membershipManager.Memberships
@@ -206,16 +207,16 @@ public sealed class UsersController : SteamfinityController
             await _steamApi.RefreshAccountsAsync(accounts);
         }
 
-        var overviews = accounts
-                        .Select(a => new AccountOverview
-                        {
-                            Id = a.Id,
-                            ProfileName = a.ProfileName,
-                            AvatarUrl = a.AvatarUrl
-                        })
-                        .AsAsyncEnumerable();
+        var accountOverviews = accounts
+                               .Select(a => new AccountOverview
+                               {
+                                   Id = a.Id,
+                                   ProfileName = a.ProfileName,
+                                   AvatarUrl = a.AvatarUrl
+                               })
+                               .AsAsyncEnumerable();
 
-        return Ok(overviews);
+        return Ok(accountOverviews);
     }
 
     [HttpGet("{userId}/favorites")]
@@ -233,12 +234,12 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
-        if (userId != UserId && !IsAdministrator)
+        if (!IsAdministrator && userId != UserId)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to view other user's accounts.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var authorizedLibraries = _membershipManager.Memberships
@@ -260,16 +261,16 @@ public sealed class UsersController : SteamfinityController
             await _steamApi.RefreshAccountsAsync(accounts);
         }
 
-        var overviews = accounts
-                        .Select(a => new AccountOverview
-                        {
-                            Id = a.Id,
-                            ProfileName = a.ProfileName,
-                            AvatarUrl = a.AvatarUrl
-                        })
-                        .AsAsyncEnumerable();
+        var accountOverviews = accounts
+                               .Select(a => new AccountOverview
+                               {
+                                   Id = a.Id,
+                                   ProfileName = a.ProfileName,
+                                   AvatarUrl = a.AvatarUrl
+                               })
+                               .AsAsyncEnumerable();
 
-        return Ok(overviews);
+        return Ok(accountOverviews);
     }
 
     [HttpGet("{userId}/hashtags")]
@@ -284,25 +285,25 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
-        if (userId != UserId && !IsAdministrator)
+        if (!IsAdministrator && userId != UserId)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to view other users' hashtags.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var hashtags = _membershipManager.Memberships
-            .AsNoTracking()
-            .Where(m => m.UserId == userId)
-            .Include(m => m.Library)
-            .ThenInclude(l => l.Accounts)
-            .ThenInclude(a => a.Hashtags)
-            .SelectMany(m => m.Library.Accounts.SelectMany(a => a.Hashtags))
-            .ApplyPageOptions(pageOptions)
-            .Select(h => h.Name)
-            .Distinct()
-            .AsAsyncEnumerable();
+                       .AsNoTracking()
+                       .Where(m => m.UserId == userId)
+                       .Include(m => m.Library)
+                       .ThenInclude(l => l.Accounts)
+                       .ThenInclude(a => a.Hashtags)
+                       .SelectMany(m => m.Library.Accounts.SelectMany(a => a.Hashtags))
+                       .Select(h => h.Name)
+                       .Distinct()
+                       .ApplyPageOptions(pageOptions)
+                       .AsAsyncEnumerable();
 
         return Ok(hashtags);
     }
@@ -322,12 +323,12 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
-        if (userId != UserId && !IsAdministrator)
+        if (!IsAdministrator && userId != UserId)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to change other user's name.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var previousUserName = user.UserName;
@@ -343,12 +344,12 @@ public sealed class UsersController : SteamfinityController
 
             if (errorCode == "DuplicateUserName")
             {
-                return ApiError(StatusCodes.Status409Conflict, "DUPLICATE_USERNAME", "There is already a user with this username.");
+                return CommonApiErrors.DuplicateUserName;
             }
 
             if (errorCode == "InvalidUserName")
             {
-                return ApiError(StatusCodes.Status400BadRequest, "INVALID_USERNAME", "The username is too short, too long, or contains illegal characters.");
+                return CommonApiErrors.InvalidUserName;
             }
 
             throw new IdentityException(errorCode);
@@ -372,12 +373,12 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
-        if (userId != UserId && !IsAdministrator)
+        if (!IsAdministrator && userId != UserId)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to change other users' passwords.");
+            return CommonApiErrors.AccessDenied;
         }
 
         IdentityResult result;
@@ -390,7 +391,7 @@ public sealed class UsersController : SteamfinityController
         {
             if (request.CurrentPassword == null)
             {
-                return ApiError(StatusCodes.Status401Unauthorized, "INCORRECT_PASSWORD", "The current password must be provided.");
+                return CommonApiErrors.IncorrectPassword;
             }
 
             result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
@@ -402,13 +403,13 @@ public sealed class UsersController : SteamfinityController
 
             if (errorCode == "PasswordMismatch")
             {
-                return ApiError(StatusCodes.Status401Unauthorized, "INCORRECT_PASSWORD", "The current password is incorrect.");
+                return CommonApiErrors.IncorrectPassword;
             }
 
             if (errorCode is "PasswordTooShort" or "PasswordRequiresLower" or "PasswordRequiresUpper" or
                "PasswordRequiresDigit" or "PasswordRequiresNonAlphanumeric" or "PasswordRequiresUniqueChars")
             {
-                return ApiError(StatusCodes.Status400BadRequest, "PASSWORD_TOO_WEAK", "The new password is too weak.");
+                return CommonApiErrors.PasswordTooWeak;
             }
 
             throw new IdentityException(errorCode);
@@ -433,18 +434,18 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
         var role = await _roleManager.FindByNameAsync(request.RoleName);
         if (role == null)
         {
-            return ApiError(StatusCodes.Status404NotFound, "ROLE_NOT_FOUND", "There is no role with this name.");
+            return CommonApiErrors.RoleNotFound;
         }
 
         if (await _userManager.IsInRoleAsync(user, request.RoleName))
         {
-            return ApiError(StatusCodes.Status404NotFound, "USER_ALREADY_IN_ROLE", "The user has already been added to this role.");
+            return CommonApiErrors.UserAlreadyInRole;
         }
 
         var result = await _userManager.AddToRoleAsync(user, request.RoleName);
@@ -473,18 +474,18 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
         var role = await _roleManager.FindByNameAsync(roleName);
         if (role == null)
         {
-            return ApiError(StatusCodes.Status404NotFound, "ROLE_NOT_FOUND", "There is no role with this name.");
+            return CommonApiErrors.RoleNotFound;
         }
 
         if (!await _userManager.IsInRoleAsync(user, roleName))
         {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_IN_ROLE", "The user is not added to this role.");
+            return CommonApiErrors.UserNotInRole;
         }
 
         var result = await _userManager.RemoveFromRoleAsync(user, roleName);
@@ -512,7 +513,7 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
         var previousIsSuspended = user.IsSuspended;
@@ -548,17 +549,17 @@ public sealed class UsersController : SteamfinityController
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
-            return UserNotFoundError();
+            return CommonApiErrors.UserNotFoundById;
         }
 
-        if (userId != UserId && !IsAdministrator)
+        if (!IsAdministrator && userId != UserId)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to delete other users.");
+            return CommonApiErrors.AccessDenied;
         }
 
         if (!IsAdministrator && !await _userManager.CheckPasswordAsync(user, request.Password))
         {
-            return ApiError(StatusCodes.Status401Unauthorized, "INCORRECT_PASSWORD", "The provided password is incorrect.");
+            return CommonApiErrors.IncorrectPassword;
         }
 
         var result = await _userManager.DeleteAsync(user);
@@ -570,11 +571,6 @@ public sealed class UsersController : SteamfinityController
 
         await _auditLog.LogUserDeletionAsync(UserId, user.Id);
         return NoContent();
-    }
-
-    private static ObjectResult UserNotFoundError()
-    {
-        return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
     }
 
     private static UserOverview CreateUserOverview(ApplicationUser user)

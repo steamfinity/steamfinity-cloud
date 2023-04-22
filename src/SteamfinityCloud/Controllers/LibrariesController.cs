@@ -7,6 +7,7 @@ using Steamfinity.Cloud.Enums;
 using Steamfinity.Cloud.Extensions;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
+using Steamfinity.Cloud.Utilities;
 using System.Data;
 
 namespace Steamfinity.Cloud.Controllers;
@@ -47,19 +48,19 @@ public sealed class LibrariesController : SteamfinityController
     {
         ArgumentNullException.ThrowIfNull(pageOptions, nameof(pageOptions));
 
-        var libraries = _membershipManager.Memberships
-                        .AsNoTracking()
-                        .Where(m => m.UserId == UserId)
-                        .ApplyPageOptions(pageOptions)
-                        .Include(m => m.Library)
-                        .Select(m => new LibraryOverview
-                        {
-                            Id = m.LibraryId,
-                            Name = m.Library.Name
-                        })
-                        .AsAsyncEnumerable();
+        var libraryOverviews = _membershipManager.Memberships
+                               .AsNoTracking()
+                               .Where(m => m.UserId == UserId)
+                               .ApplyPageOptions(pageOptions)
+                               .Include(m => m.Library)
+                               .Select(m => new LibraryOverview
+                               {
+                                   Id = m.LibraryId,
+                                   Name = m.Library.Name
+                               })
+                               .AsAsyncEnumerable();
 
-        return Ok(libraries);
+        return Ok(libraryOverviews);
     }
 
     [HttpPost]
@@ -79,10 +80,9 @@ public sealed class LibrariesController : SteamfinityController
         };
 
         var result = await _libraryManager.CreateAsync(library, UserId);
-
         if (result == LibraryCreationResult.LibraryLimitExceeded)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "LIBRARY_LIMIT_EXCEEDED", "You are already a member of the maximum number of libraries.");
+            return CommonApiErrors.LibraryLimitExceeded;
         }
 
         var overview = new LibraryOverview
@@ -106,15 +106,15 @@ public sealed class LibrariesController : SteamfinityController
         var library = await _libraryManager.FindByIdAsync(libraryId);
         if (library == null)
         {
-            return LibraryNotFoundError();
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
-        var details = new LibraryDetails
+        var libraryDetails = new LibraryDetails
         {
             Id = library.Id,
             Name = library.Name,
@@ -123,7 +123,7 @@ public sealed class LibrariesController : SteamfinityController
             CreationTime = library.CreationTime
         };
 
-        return Ok(details);
+        return Ok(libraryDetails);
     }
 
     [HttpPatch("{libraryId}/name")]
@@ -140,12 +140,12 @@ public sealed class LibrariesController : SteamfinityController
         var library = await _libraryManager.FindByIdAsync(libraryId);
         if (library == null)
         {
-            return LibraryNotFoundError();
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageLibrary(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var previosName = library.Name;
@@ -176,12 +176,12 @@ public sealed class LibrariesController : SteamfinityController
         var library = await _libraryManager.FindByIdAsync(libraryId);
         if (library == null)
         {
-            return LibraryNotFoundError();
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageLibrary(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
         if (request.NewDescription == library.Description)
@@ -210,12 +210,12 @@ public sealed class LibrariesController : SteamfinityController
 
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return LibraryNotFoundError();
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var overviews = _membershipManager.Memberships
@@ -247,34 +247,24 @@ public sealed class LibrariesController : SteamfinityController
 
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return LibraryNotFoundError();
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageMembersAsync(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage users in this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var result = await _membershipManager.AddMemberAsync(libraryId, request.UserId, request.Role);
 
-        if (result == MemberAdditionResult.LibraryNotFound)
+        if (result == MemberAdditionResult.LibraryLimitExceeded)
         {
-            return LibraryNotFoundError();
-        }
-
-        if (result == MemberAdditionResult.UserNotFound)
-        {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with this identifier.");
-        }
-
-        if (result == MemberAdditionResult.MemberAlreadyAdded)
-        {
-            return ApiError(StatusCodes.Status400BadRequest, "USER_ALREADY_ADDED", "This user is already a member of the library.");
+            return CommonApiErrors.LibraryLimitExceeded;
         }
 
         if (result == MemberAdditionResult.MemberLimitExceeded)
         {
-            return ApiError(StatusCodes.Status403Forbidden, "MEMBER_LIMIT_EXCEEDED", "This library already has the maximum number of members.");
+            return CommonApiErrors.MemberLimitExceeded;
         }
 
         await _auditLog.LogMemberAdditionAsync(UserId, libraryId, request.UserId);
@@ -294,30 +284,20 @@ public sealed class LibrariesController : SteamfinityController
 
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return LibraryNotFoundError();
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageMembersAsync(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage users in this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var previousRole = (await _membershipManager.FindByIdAsync(libraryId, userId))?.Role;
         var result = await _membershipManager.ChangeMemberRoleAsync(libraryId, userId, request.NewRole);
 
-        if (result == MemberRoleChangeResult.LibraryNotFound)
-        {
-            return LibraryNotFoundError();
-        }
-
-        if (result == MemberRoleChangeResult.UserNotFound)
-        {
-            return ApiError(StatusCodes.Status404NotFound, "USER_NOT_FOUND", "There is no user with the this identifier.");
-        }
-
         if (result == MemberRoleChangeResult.UserNotMember)
         {
-            return ApiError(StatusCodes.Status400BadRequest, "USER_NOT_MEMBER", "This user is not a member of the library.");
+            return CommonApiErrors.UserNotLibraryMember;
         }
 
         await _auditLog.LogMemberRoleChangeAsync(UserId, libraryId, userId, previousRole!.Value, request.NewRole);
@@ -335,32 +315,17 @@ public sealed class LibrariesController : SteamfinityController
     {
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return LibraryNotFoundError();
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageMembersAsync(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status404NotFound, "ACCESS_DENIED", "You are not allowed to manage users in this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
-        var result = await _membershipManager.RemoveMemberAsync(libraryId, userId);
-
-        if (result == MemberRemovalResult.LibraryNotFound)
-        {
-            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
-        }
-
-        if (result == MemberRemovalResult.UserNotFound)
-        {
-            return LibraryNotFoundError();
-        }
-
-        if (result == MemberRemovalResult.UserNotMember)
-        {
-            return ApiError(StatusCodes.Status400BadRequest, "USER_NOT_MEMBER", "This user is not a member of the library.");
-        }
-
+        await _membershipManager.RemoveMemberAsync(libraryId, userId);
         await _auditLog.LogMemberRemovalAsync(UserId, libraryId, userId);
+
         return NoContent();
     }
 
@@ -378,12 +343,12 @@ public sealed class LibrariesController : SteamfinityController
 
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return LibraryNotFoundError();
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanViewLibraryAsync(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not a member of this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var accounts = _accountManager.Accounts
@@ -397,16 +362,16 @@ public sealed class LibrariesController : SteamfinityController
             await _steamApi.RefreshAccountsAsync(accounts);
         }
 
-        var overviews = accounts
-                        .Select(a => new AccountOverview
-                        {
-                            Id = a.Id,
-                            ProfileName = a.ProfileName,
-                            AvatarUrl = a.AvatarUrl
-                        })
-                        .AsAsyncEnumerable();
+        var accountOverviews = accounts
+                               .Select(a => new AccountOverview
+                               {
+                                   Id = a.Id,
+                                   ProfileName = a.ProfileName,
+                                   AvatarUrl = a.AvatarUrl
+                               })
+                               .AsAsyncEnumerable();
 
-        return Ok(overviews);
+        return Ok(accountOverviews);
     }
 
     [HttpPost("{libraryId}/accounts")]
@@ -422,18 +387,18 @@ public sealed class LibrariesController : SteamfinityController
 
         if (!await _libraryManager.ExistsAsync(libraryId))
         {
-            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageAccountsAsync(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage accounts in this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
         var steamId = await _steamApi.TryResolveSteamIdAsync(request.SteamId);
         if (steamId == null)
         {
-            return ApiError(StatusCodes.Status400BadRequest, "INVALID_STEAMID", "The provided STEAM ID is invalid.");
+            return CommonApiErrors.InvalidSteamId;
         }
 
         var account = new Account
@@ -444,19 +409,14 @@ public sealed class LibrariesController : SteamfinityController
 
         var result = await _accountManager.AddAsync(account);
 
-        if (result == AccountAdditionResult.LibraryNotFound)
+        if (result == AccountAdditionResult.AccountLimitExceeded)
         {
-            return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
-        }
-
-        if (result == AccountAdditionResult.LibrarySizeExceeded)
-        {
-            return ApiError(StatusCodes.Status403Forbidden, "LIBRARY_SIZE_EXCEEDED", "This library already has the maximum number of accounts.");
+            return CommonApiErrors.AccountLimitExceeded;
         }
 
         if (result == AccountAdditionResult.InvalidSteamId)
         {
-            return ApiError(StatusCodes.Status400BadRequest, "INVALID_STEAMID", "The provided STEAM ID is invalid.");
+            return CommonApiErrors.InvalidSteamId;
         }
 
         var overview = new AccountOverview
@@ -482,22 +442,17 @@ public sealed class LibrariesController : SteamfinityController
         var library = await _libraryManager.FindByIdAsync(libraryId);
         if (library == null)
         {
-            return LibraryNotFoundError();
+            return CommonApiErrors.LibraryNotFound;
         }
 
         if (!IsAdministrator && !await _permissionManager.CanManageLibrary(libraryId, UserId))
         {
-            return ApiError(StatusCodes.Status403Forbidden, "ACCESS_DENIED", "You are not allowed to manage this library.");
+            return CommonApiErrors.AccessDenied;
         }
 
         await _libraryManager.DeleteAsync(library);
         await _auditLog.LogLibraryDeletionAsync(UserId, libraryId);
 
         return NoContent();
-    }
-
-    private static ObjectResult LibraryNotFoundError()
-    {
-        return ApiError(StatusCodes.Status404NotFound, "LIBRARY_NOT_FOUND", "There is no library with this identifier.");
     }
 }

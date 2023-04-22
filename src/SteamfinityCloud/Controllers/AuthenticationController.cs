@@ -6,6 +6,7 @@ using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Models;
 using Steamfinity.Cloud.Services;
+using Steamfinity.Cloud.Utilities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -49,12 +50,12 @@ public sealed class AuthenticationController : SteamfinityController
             var correctAdministratorSignUpKey = _configuration["Authentication:AdministratorSignUpKey"];
             if (string.IsNullOrWhiteSpace(correctAdministratorSignUpKey))
             {
-                return ApiError(StatusCodes.Status401Unauthorized, "ADMIN_KEY_DISABLED", "The administrator sign-up key has not been configured in the server settings.");
+                return CommonApiErrors.AdministratorSignUpKeyNotConfigured;
             }
 
             if (request.AdministratorSignUpKey != correctAdministratorSignUpKey)
             {
-                return ApiError(StatusCodes.Status401Unauthorized, "INCORRECT_ADMIN_KEY", "The provided administrator sign-up key is incorrect.");
+                return CommonApiErrors.IncorrectAdministratorSignUpKey;
             }
 
             addToAdministratorRole = true;
@@ -72,18 +73,18 @@ public sealed class AuthenticationController : SteamfinityController
 
             if (errorCode == "DuplicateUserName")
             {
-                return ApiError(StatusCodes.Status409Conflict, "DUPLICATE_USERNAME", "There is already a user with this username.");
+                return CommonApiErrors.DuplicateUserName;
             }
 
             if (errorCode == "InvalidUserName")
             {
-                return ApiError(StatusCodes.Status400BadRequest, "INVALID_USERNAME", "The provided username is too short, too long, or contains illegal characters.");
+                return CommonApiErrors.InvalidUserName;
             }
 
             if (errorCode is "PasswordTooShort" or "PasswordRequiresLower" or "PasswordRequiresUpper" or
                 "PasswordRequiresDigit" or "PasswordRequiresNonAlphanumeric" or "PasswordRequiresUniqueChars")
             {
-                return ApiError(StatusCodes.Status400BadRequest, "PASSWORD_TOO_WEAK", "The provided password is too weak.");
+                return CommonApiErrors.PasswordTooWeak;
             }
 
             throw new IdentityException(errorCode);
@@ -111,29 +112,29 @@ public sealed class AuthenticationController : SteamfinityController
         var user = await _userManager.FindByNameAsync(request.UserName);
         if (user == null)
         {
-            return ApiError(StatusCodes.Status401Unauthorized, "INVALID_CREDENTIALS", "The provided username and password do not match.");
+            return CommonApiErrors.InvalidCredentials;
         }
 
         var signInResult = await _signInManager.CheckPasswordSignInAsync(user, request.Password, true);
 
         if (signInResult.IsLockedOut)
         {
-            return ApiError(StatusCodes.Status401Unauthorized, "LOCKED_OUT", "This user account has been temporarily blocked due to multiple failed sign-in attempts.");
+            return CommonApiErrors.UserLockedOut;
         }
 
         if (signInResult.IsNotAllowed)
         {
-            return ApiError(StatusCodes.Status401Unauthorized, "NOT_ALLOWED", "You are currently not allowed to sign in.");
+            return CommonApiErrors.SignInNotAllowed;
         }
 
         if (!signInResult.Succeeded)
         {
-            return ApiError(StatusCodes.Status401Unauthorized, "INVALID_CREDENTIALS", "The provided username and password do not match.");
+            return CommonApiErrors.InvalidCredentials;
         }
 
         if (user.IsSuspended)
         {
-            return ApiError(StatusCodes.Status401Unauthorized, "USER_SUSPENDED", "This user account has been suspended.");
+            return CommonApiErrors.UserSuspended;
         }
 
         user.LastSignInTime = DateTimeOffset.UtcNow;
@@ -164,12 +165,12 @@ public sealed class AuthenticationController : SteamfinityController
         var user = await _userManager.FindByIdAsync(request.UserId.ToString());
         if (user == null)
         {
-            return ApiError(StatusCodes.Status401Unauthorized, "INVALID_TOKEN", "The provided authentication token is invalid.");
+            return CommonApiErrors.InvalidToken;
         }
 
         if (!await _userManager.VerifyUserTokenAsync(user, "Default", "RefreshToken", request.RefreshToken))
         {
-            return ApiError(StatusCodes.Status401Unauthorized, "INVALID_TOKEN", "The provided authentication token is invalid.");
+            return CommonApiErrors.InvalidToken;
         }
 
         var claims = new List<Claim>

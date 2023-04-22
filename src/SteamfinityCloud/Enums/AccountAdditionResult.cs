@@ -3,7 +3,6 @@
 public enum AccountAdditionResult
 {
     Success,
-    LibraryNotFound,
-    LibrarySizeExceeded,
+    AccountLimitExceeded,
     InvalidSteamId
 }

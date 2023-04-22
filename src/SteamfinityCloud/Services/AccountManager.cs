@@ -2,25 +2,20 @@
 using Steamfinity.Cloud.Constants;
 using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
-using System.Security.Principal;
+using Steamfinity.Cloud.Exceptions;
+using Steamfinity.Cloud.Extensions;
 
 namespace Steamfinity.Cloud.Services;
 
 public sealed class AccountManager : IAccountManager
 {
     private readonly ApplicationDbContext _context;
-    private readonly ILibraryManager _libraryManager;
     private readonly ILimitProvider _limitProvider;
     private readonly ISteamApi _steamApi;
 
-    public AccountManager(
-        ApplicationDbContext context,
-        ILibraryManager libraryManager,
-        ILimitProvider limitProvider,
-        ISteamApi steamApi)
+    public AccountManager(ApplicationDbContext context, ILimitProvider limitProvider, ISteamApi steamApi)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _libraryManager = libraryManager ?? throw new ArgumentNullException(nameof(libraryManager));
         _limitProvider = limitProvider ?? throw new ArgumentNullException(nameof(limitProvider));
         _steamApi = steamApi ?? throw new ArgumentNullException(nameof(steamApi));
     }
@@ -40,16 +35,12 @@ public sealed class AccountManager : IAccountManager
     public async Task<AccountAdditionResult> AddAsync(Account account)
     {
         ArgumentNullException.ThrowIfNull(account, nameof(account));
+        await ThrowIfLibraryNotExistsAsync(account.LibraryId);
 
-        if (!await _libraryManager.ExistsAsync(account.LibraryId))
-        {
-            return AccountAdditionResult.LibraryNotFound;
-        }
-
-        var currentNumberOfAccounts = await _context.Accounts.CountAsync(a => a.LibraryId == account.LibraryId);
+        var currentNumberOfAccounts = await GetNumberOfAccountsInLibraryAsync(account.LibraryId);
         if (currentNumberOfAccounts >= _limitProvider.MaxAccountsPerLibrary)
         {
-            return AccountAdditionResult.LibrarySizeExceeded;
+            return AccountAdditionResult.AccountLimitExceeded;
         }
 
         if (!await _steamApi.TryRefreshAccountAsync(account))
@@ -63,19 +54,96 @@ public sealed class AccountManager : IAccountManager
         return AccountAdditionResult.Success;
     }
 
-    public async Task<HashtagsSetResult> SetHashtagsAsync(Account account, IEnumerable<string> hashtags)
+    public async Task ChangeAccountNameAsync(Account account, string? newAccountName)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+
+        account.AccountName = newAccountName;
+        account.OptimizedAccountName = newAccountName?.OptimizeForSearch();
+
+        await UpdateAsync(account, AccountUpdateType.Edit);
+    }
+
+    public async Task ChangePasswordAsync(Account account, string? newPassword)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+
+        account.Password = newPassword;
+        await UpdateAsync(account, AccountUpdateType.Edit);
+    }
+
+    public async Task ChangeAliasAsync(Account account, string? newAlias)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+
+        account.Alias = newAlias;
+        account.OptimizedAlias = newAlias?.OptimizeForSearch();
+
+        await UpdateAsync(account, AccountUpdateType.Edit);
+    }
+
+    public async Task ChangeColorAsync(Account account, SimpleColor newColor)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+
+        account.Color = newColor;
+        await UpdateAsync(account, AccountUpdateType.Edit);
+    }
+
+    public async Task ChangePrimeStatusAsync(Account account, bool newPrimeStatus)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+
+        account.HasPrimeStatus = newPrimeStatus;
+        await UpdateAsync(account, AccountUpdateType.Edit);
+    }
+
+    public async Task ChangeSkillGroupAsync(Account account, SkillGroup newSkillGroup)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+
+        account.SkillGroup = newSkillGroup;
+        await UpdateAsync(account, AccountUpdateType.Edit);
+    }
+
+    public async Task ChangeCooldownExpirationTimeAsync(Account account, DateTimeOffset newCooldownExpirationTime)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+
+        account.CooldownExpirationTime = newCooldownExpirationTime;
+        await UpdateAsync(account, AccountUpdateType.Edit);
+    }
+
+    public async Task ChangeLaunchParametersAsync(Account account, string? newLaunchParameters)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+
+        account.LaunchParameters = newLaunchParameters;
+        account.OptimizedLaunchParameters = newLaunchParameters?.OptimizeForSearch();
+
+        await UpdateAsync(account, AccountUpdateType.Edit);
+    }
+
+    public async Task ChangeNotesAsync(Account account, string? newNotes)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+
+        account.Notes = newNotes;
+        account.OptimizedNotes = newNotes?.OptimizeForSearch();
+
+        await UpdateAsync(account, AccountUpdateType.Edit);
+    }
+
+    public async Task<HashtagsChangeResult> ChangeHashtagsAsync(Account account, IEnumerable<string> hashtags)
     {
         ArgumentNullException.ThrowIfNull(account, nameof(account));
         ArgumentNullException.ThrowIfNull(hashtags, nameof(hashtags));
 
-        if (!await ExistsAsync(account.Id))
-        {
-            return HashtagsSetResult.AccountNotFound;
-        }
+        await ThrowIfAccountNotExistsAsync(account.Id);
 
         if (hashtags.Count() > _limitProvider.MaxHashtagsPerAccount)
         {
-            return HashtagsSetResult.HashtagLimitExceeded;
+            return HashtagsChangeResult.HashtagLimitExceeded;
         }
 
         _context.Hashtags.RemoveRange(_context.Hashtags.Where(h => h.AccountId == account.Id));
@@ -83,31 +151,78 @@ public sealed class AccountManager : IAccountManager
         {
             if (hashtag.Length is < PropertyLengthConstraints.MinHashtagLength or > PropertyLengthConstraints.MaxHashtagLength)
             {
-                return HashtagsSetResult.InvalidHashtags;
+                return HashtagsChangeResult.InvalidHashtags;
             }
 
             _ = await _context.Hashtags.AddAsync(new Hashtag(account.Id, hashtag));
         }
 
         _ = await _context.SaveChangesAsync();
-        return HashtagsSetResult.Success;
+        return HashtagsChangeResult.Success;
     }
 
-    public async Task UpdateAsync(Account account)
+    public async Task<TransferResult> TransferAsync(Account account, Guid newLibraryId)
     {
         ArgumentNullException.ThrowIfNull(account, nameof(account));
 
-        _ = _context.Accounts.Update(account);
+        await ThrowIfAccountNotExistsAsync(account.Id);
+        await ThrowIfLibraryNotExistsAsync(newLibraryId);
+
+        if (await GetNumberOfAccountsInLibraryAsync(newLibraryId) >= _limitProvider.MaxAccountsPerLibrary)
+        {
+            return TransferResult.AccountLimitExceeded;
+        }
+
+        account.LibraryId = newLibraryId;
+        await UpdateAsync(account, AccountUpdateType.Edit);
+
+        return TransferResult.Success;
+    }
+
+    public async Task UpdateAsync(Account account, AccountUpdateType updateType = AccountUpdateType.Default)
+    {
+        ArgumentNullException.ThrowIfNull(account, nameof(account));
+        await ThrowIfAccountNotExistsAsync(account.Id);
+
+        if (updateType == AccountUpdateType.Edit)
+        {
+            account.LastEditTime = DateTimeOffset.UtcNow;
+        }
+        else if (updateType == AccountUpdateType.Refresh)
+        {
+            account.LastRefreshTime = DateTimeOffset.UtcNow;
+        }
+
         _ = await _context.SaveChangesAsync();
     }
 
     public async Task RemoveAsync(Account account)
     {
         ArgumentNullException.ThrowIfNull(account, nameof(account));
+        await ThrowIfAccountNotExistsAsync(account.Id);
 
-        _ = _context.Accounts.Attach(account);
         _ = _context.Accounts.Remove(account);
-
         _ = await _context.SaveChangesAsync();
+    }
+
+    private async Task ThrowIfAccountNotExistsAsync(Guid accountId)
+    {
+        if (!await ExistsAsync(accountId))
+        {
+            throw new NotFoundException($"The account '{accountId}' was not found in the database.");
+        }
+    }
+
+    private async Task ThrowIfLibraryNotExistsAsync(Guid libraryId)
+    {
+        if (!await _context.Libraries.AnyAsync(l => l.Id == libraryId))
+        {
+            throw new NotFoundException($"The library '{libraryId}' was not found in the database.");
+        }
+    }
+
+    private async Task<int> GetNumberOfAccountsInLibraryAsync(Guid libraryId)
+    {
+        return await _context.Libraries.CountAsync(l => l.Id == libraryId);
     }
 }
