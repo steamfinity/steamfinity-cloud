@@ -3,6 +3,7 @@
 public enum AccountAdditionResult
 {
     Success,
+    DuplicateAccount,
     AccountLimitExceeded,
     InvalidSteamId
 }

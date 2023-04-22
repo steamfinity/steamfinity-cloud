@@ -4,6 +4,7 @@ using Steamfinity.Cloud.Entities;
 using Steamfinity.Cloud.Enums;
 using Steamfinity.Cloud.Exceptions;
 using Steamfinity.Cloud.Extensions;
+using System.Security.Principal;
 
 namespace Steamfinity.Cloud.Services;
 
@@ -36,6 +37,11 @@ public sealed class AccountManager : IAccountManager
     {
         ArgumentNullException.ThrowIfNull(account, nameof(account));
         await ThrowIfLibraryNotExistsAsync(account.LibraryId);
+
+        if (await AccountExistsInLibraryAsync(account.LibraryId, account.SteamId))
+        {
+            return AccountAdditionResult.DuplicateAccount;
+        }
 
         var currentNumberOfAccounts = await GetNumberOfAccountsInLibraryAsync(account.LibraryId);
         if (currentNumberOfAccounts >= _limitProvider.MaxAccountsPerLibrary)
@@ -168,6 +174,11 @@ public sealed class AccountManager : IAccountManager
         await ThrowIfAccountNotExistsAsync(account.Id);
         await ThrowIfLibraryNotExistsAsync(newLibraryId);
 
+        if (await AccountExistsInLibraryAsync(newLibraryId, account.SteamId))
+        {
+            return TransferResult.DuplicateAccount;
+        }
+
         if (await GetNumberOfAccountsInLibraryAsync(newLibraryId) >= _limitProvider.MaxAccountsPerLibrary)
         {
             return TransferResult.AccountLimitExceeded;
@@ -203,6 +214,11 @@ public sealed class AccountManager : IAccountManager
 
         _ = _context.Accounts.Remove(account);
         _ = await _context.SaveChangesAsync();
+    }
+
+    private async Task<bool> AccountExistsInLibraryAsync(Guid libraryId, ulong steamId)
+    {
+        return await _context.Accounts.AnyAsync(a => a.LibraryId == libraryId && a.SteamId == steamId);
     }
 
     private async Task ThrowIfAccountNotExistsAsync(Guid accountId)

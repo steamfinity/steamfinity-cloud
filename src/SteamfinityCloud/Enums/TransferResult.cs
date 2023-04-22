@@ -3,5 +3,6 @@
 public enum TransferResult
 {
     Success,
+    DuplicateAccount,
     AccountLimitExceeded
 }

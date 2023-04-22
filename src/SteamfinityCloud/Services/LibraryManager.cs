@@ -11,10 +11,7 @@ public sealed class LibraryManager : ILibraryManager
     private readonly IMembershipManager _membershipManager;
     private readonly ILimitProvider _limitProvider;
 
-    public LibraryManager(
-        ApplicationDbContext context,
-        IMembershipManager membershipManager,
-        ILimitProvider limitProvider)
+    public LibraryManager(ApplicationDbContext context, IMembershipManager membershipManager, ILimitProvider limitProvider)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _membershipManager = membershipManager ?? throw new ArgumentNullException(nameof(membershipManager));
